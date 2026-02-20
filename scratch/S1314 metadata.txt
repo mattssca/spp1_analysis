@@ -1,0 +1,164 @@
+ALTPATID	ARMNAME	STRAT1	STRAT2	AGE	SEX	RACE	prim_analysis	itt_analysis	adequate_tiss	ANY_TRT	GFS	adequate_chemo	CYSTECTOMY	PATHSTGT	PATHSTGN	PATHSTGM	NLYMPHN	NPOSNOD	PATH_RESP	pT0	OS_IND	OS_TIM	PFS_IND	PFS_TIM	TT_offtx	TT_cyst	GC_FAV	ddMVAC_FAV	GC_FAV_dup	ddMVAC_FAV_dup	GEO	tcgagrp	tcga	LundTax2023_simple	consensus	mda	mdagrp	poor_qual
+P201471010	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	59,5	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	11	0	NR	0	0	1949	0	1949	46	90	0	0	.	.	1		.	Uro		.		1
+P201510632	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	65,2	F	N	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	16	0	CR	1	0	1901	0	1901	47	76	0	1	.	.	1	BS	3	Uro	Ba/Sq	1	Basal	0
+P201511368	GC+CYST	Clinical Stage: T2	Performance Status: 1	75,2	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN1	M0	10	1	NR	0	0	510	0	510	76	91	0	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201513419	GC+CYST	Clinical Stage: T2	Performance Status: 0	48	M	W	1	1	Y	Y	0	Y	Y	PTA	PN0	M0	12	0	PR	0	1	1592	1	1005	59	107	0	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201513530	GC+CYST	Clinical Stage: T2	Performance Status: 0	66,6	M	W	1	1	Y	Y	0	Y	Y	PT3A	PN0	M0	8	0	NR	0	0	2178	1	209	83	131	0	0	.	.	1	BS	3	BaSq	Ba/Sq	2	p53	0
+P201514523	GC+CYST	Clinical Stage: T2	Performance Status: 0	53,1	F	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	14	0	CR	1	0	1870	0	1870	71	134	1	1	1	1	1	BS	3	GU	LumP	3	Lumin	0
+P201517416	GC+CYST	Clinical Stage: T2	Performance Status: 0	75,1	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	12	0	CR	1	0	1890	0	1890	92	141	1	0	.	.	1	BS	3	GU	LumU	3	Lumin	0
+P201521727	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	64,9	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	39	0	CR	1	0	1936	0	1936	47	88	0	0	1	1	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201527495	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	67,4	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN1	M0	27	1	NR	0	1	809	1	561	57	119	0	1	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201528766	GC+CYST	Clinical Stage: T2	Performance Status: 1	66,4	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	75	0	PR	0	0	2480	0	2480	80	133	0	0	.	.	1	Lum_Pap	5	BaSq	Ba/Sq	1	Basal	0
+P201531182	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	54,3	M	W	1	1	Y	Y	1	Y	Y	PT3B	PN0	M0	34	0	NR	0	1	451	1	203	49	147	0	0	.	.	1	BS	3	Mes	Ba/Sq	1	Basal	0
+P201537829	GC+CYST	Clinical Stage: T2	Performance Status: 0	68,3	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	3	0	NR	0	1	266	1	175	78	92	0	0	.	.	1		.	BaSq		.		1
+P201540848	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	69,5	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	18	0	CR	1	0	2383	0	2383	75	129	0	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201546672	GC+CYST	Clinical Stage: T2	Performance Status: 0	66,4	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	38	0	CR	1	0	1836	0	1836	70	128	0	0	.	.	1		.	Uro		.		1
+P201546727	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	69	F	W	1	1	Y	Y	1	Y	Y	PT1	PN0	M0	22	0	PR	0	0	515	0	515	66	127	1	0	.	.	1		.	Uro		.		1
+P201550563	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	59,4	M	W	1	1	Y	Y	1	Y	Y	PT3	PN0	M0	6	0	PR	0	0	2562	1	390	73	94	1	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201552627	GC+CYST	Clinical Stage: T2	Performance Status: 0	46	M	W	1	1	Y	Y	0	Y	Y	PT3A	PN2	M0	28	28	NR	0	0	708	0	708	71	103	1	0	.	.	1	Lum_Pap	5	GU	LumU	3	Lumin	0
+P201555405	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	66,4	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	18	0	NR	1	0	2029	0	2029	47	131	1	1	.	.	1	BS	3	GU	Ba/Sq	1	Basal	0
+P201555953	GC+CYST	Clinical Stage: T2	Performance Status: 0	54	M	W	1	1	Y	Y	1	Y	Y	PT3B	PN0	M0	14	0	NR	0	1	603	1	377	71	118	0	0	.	.	1	Lum_Inf	2	Mes	Stroma-rich	2	p53	0
+P201559680	GC+CYST	Clinical Stage: T2	Performance Status: 0	71,2	M	W	1	1	Y	Y	1	Y	Y	PT1	PN1	M0	20	1	NR	0	0	2415	0	2415	78	123	0	0	.	.	1	Lum_Inf	2	Uro	Stroma-rich	2	p53	0
+P201559772	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	72	M	W	1	1	Y	Y	1	Y	Y	PT4A	PN1	M0	13	1	NR	0	1	584	1	554	49	90	0	0	.	.	1	Lum_Inf	2	Uro	Stroma-rich	2	p53	0
+P201563555	GC+CYST	Clinical Stage: T2	Performance Status: 0	60,7	M	W	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	14	0	CR	1	0	1899	0	1899	75	94	0	0	.	.	1		.	ScNE		.		1
+P201571488	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	73,4	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	23	0	PR	1	0	1910	0	1910	76	115	1	0	.	.	1	Lum_Pap	5	GU	LumP	3	Lumin	0
+P201574614	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	72,8	F	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	30	0	NR	0	0	2445	0	2445	54	121	0	0	.	.	1	BS	3	ScNE	Ba/Sq	1	Basal	0
+P201575060	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	65	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	35	0	NR	0	0	1869	0	1869	55	95	0	0	.	.	1	Lum	1	Uro	LumU	3	Lumin	0
+P201577803	GC+CYST	Clinical Stage: T2	Performance Status: 0	62,8	F	W	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	11	0	CR	1	0	1928	0	1928	77	119	1	1	.	.	1	Lum	1	GU	LumU	3	Lumin	0
+P201577864	GC+CYST	Clinical Stage: T2	Performance Status: 0	62,9	M	W	1	1	Y	Y	1	Y	Y	PT3	PN0	M0	23	0	NR	0	1	319	1	246	100	145	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201579303	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	57,2	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	4	0	CR	1	0	844	0	844	56	126	0	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201580646	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	64,8	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	56	0	CR	1	0	2316	1	1495	63	117	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201584036	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	75,8	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	37	0	PR	0	1	2404	1	2404	57	95	1	0	.	.	1	Lum	1	GU	LumU	3	Lumin	0
+P201588314	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	57	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	41	0	NR	0	0	2313	0	2313	51	77	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201595248	GC+CYST	Clinical Stage: T2	Performance Status: 0	58,6	M	W	1	1	Y	Y	0	Y	Y	PT2B	PN0	M0	43	0	NR	0	0	2372	0	2372	91	152	0	0	.	.	1		.	Uro		.		1
+P201595584	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	51,4	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	19	0	CR	1	0	1924	0	1924	57	126	0	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201599657	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	63,4	M	W	0	1	Y	Y	1	N	Y	PT0	PN0	M0	7	0	CR	1	0	1994	0	1994	21	127	1	0	.	.	1		.	Uro		.		0
+P201599766	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	56,5	M	W	1	1	Y	Y	1	Y	Y	PT3	PN0	M0	0	0	NR	0	1	1329	1	452	46	113	1	0	.	.	1	Lum_Pap	5	GU	LumU	3	Lumin	0
+P201601164	GC+CYST	Clinical Stage: T2	Performance Status: 0	75,4	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	35	0	PR	0	0	2332	0	2332	79	117	0	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201601633	GC+CYST	Clinical Stage: T2	Performance Status: 0	70,5	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	30	0	NR	0	1	424	1	299	74	117	0	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201602163	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	54,9	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	18	0	CR	1	0	1932	0	1932	59	115	0	0	.	.	1	BS	3	Mes	Ba/Sq	1	Basal	0
+P201605294	GC+CYST	Clinical Stage: T2	Performance Status: 1	63,5	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	19	0	CR	1	0	1993	0	1993	75	132	0	1	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201606550	GC+CYST	Clinical Stage: T2	Performance Status: 0	63,3	F	W	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	30	0	CR	1	0	2010	0	2010	77	126	1	1	.	.	1	Lum_Pap	5	GU	LumP	3	Lumin	0
+P201607895	GC+CYST	Clinical Stage: T2	Performance Status: 0	64	M	W	0	1	Y	Y	1	N	Y	PT0	PN0	M0	31	0	CR	1	0	388	0	388	59	107	0	0	.	.	1		.	BaSq		.		0
+P201608579	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	59,3	M	W	1	1	Y	Y	1	Y	Y	PT2A	PN0	M0	17	0	NR	0	0	1901	0	1901	55	109	1	1	.	.	1	Lum_Pap	5	Uro	LumNS	2	p53	0
+P201610581	GC+CYST	Clinical Stage: T2	Performance Status: 0	56,1	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	6	0	NR	0	1	995	1	958	76	126	1	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201610706	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	68,3	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	21	0	NR	0	0	1955	0	1955	48	75	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201610811	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	71,3	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	0	0	NR	0	0	1832	0	1832	62	131	0	0	.	.	1	Lum_Pap	5	Uro	Stroma-rich	2	p53	0
+P201611714	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	74,6	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	34	0	CR	1	0	2009	0	2009	46	87	1	1	.	.	1	Lum_Pap	5	GU	LumU	3	Lumin	0
+P201611842	GC+CYST	Clinical Stage: T2	Performance Status: 1	58,1	F	U	1	1	Y	Y	1	Y	Y	PT3	PN0	M0	35	0	NR	0	1	446	1	446	79	121	0	1	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201615426	GC+CYST	Clinical Stage: T2	Performance Status: 0	68,1	F	W	1	1	Y	Y	1	Y	Y	PT2A	PN0	M0	29	0	NR	0	0	1820	0	1820	77	111	0	0	.	.	1	BS	3	GU	Ba/Sq	1	Basal	0
+P201617902	GC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	61,8	M	B	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	6	0	CR	1	0	1875	0	1875	85	152	1	0	.	.	1	Lum_Pap	5	GU	LumU	3	Lumin	0
+P201618688	GC+CYST	Clinical Stage: T2	Performance Status: 0	65,5	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	60	0	PR	1	1	960	1	960	76	115	0	0	.	.	1	Lum_Pap	5	Uro	LumNS	3	Lumin	0
+P201620134	GC+CYST	Clinical Stage: T2	Performance Status: 1	72,6	M	U	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	8	0	CR	1	0	1934	1	388	56	97	0	0	.	.	1	BS	3	GU	Stroma-rich	3	Lumin	0
+P201620651	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	48	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	19	0	NR	0	0	2100	0	2100	62	95	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201621419	GC+CYST	Clinical Stage: T2	Performance Status: 0	62	F	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	27	0	NR	0	1	1066	1	1032	72	134	1	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201622083	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	64	F	W	1	1	Y	Y	1	Y	Y	PT1	PN0	M0	29	0	PR	0	0	1856	0	1856	49	111	0	0	.	.	1	BS	3	Mes	Ba/Sq	1	Basal	0
+P201625399	GC+CYST	Clinical Stage: T2	Performance Status: 0	68,7	F	W	1	1	Y	Y	0	Y	Y	PT2B	PN0	M0	31	.	NR	0	0	2075	0	2075	87	120	0	0	.	.	1	Lum_Inf	2	Uro	Stroma-rich	1	Basal	0
+P201625922	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	49,6	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN3	M0	18	18	NR	0	1	744	1	270	46	93	0	0	.	.	1	BS	3	GU	Ba/Sq	1	Basal	0
+P201626254	GC+CYST	Clinical Stage: T2	Performance Status: 0	75	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	24	0	PR	0	0	1897	1	643	82	140	1	1	1	0	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201627232	GC+CYST	Clinical Stage: T2	Performance Status: 0	76,1	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	22	0	CR	1	0	294	0	294	72	128	0	1	.	.	1	Lum_Inf	2	Uro	Stroma-rich	2	p53	0
+P201627722	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	45,7	M	W	1	1	Y	Y	1	Y	Y	PTA	PN0	M0	37	0	PR	0	0	1151	0	1151	53	109	0	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201627751	GC+CYST	Clinical Stage: T2	Performance Status: 1	62,1	M	W	1	1	Y	Y	0	Y	Y	PT3A	PN0	M0	15	0	NR	0	1	344	1	344	102	149	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201629238	GC+CYST	Clinical Stage: T2	Performance Status: 0	73,1	M	W	1	1	Y	Y	1	Y	Y	PT4A	PN0	M0	39	0	NR	0	0	1893	0	1893	50	105	0	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201629818	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	60,3	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	16	0	CR	1	0	1224	0	1224	36	99	1	0	.	.	1	Neuronal	4	ScNE	NE-like	2	p53	0
+P201629823	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	60,5	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	16	0	PR	0	1	667	1	285	43	103	1	0	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201629921	GC+CYST	Clinical Stage: T2	Performance Status: 1	65,6	M	W	1	1	Y	Y	1	Y	Y	PT4A	PN0	M0	12	0	NR	0	1	1548	1	630	98	131	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201630725	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	66,1	M	W	1	1	Y	Y	1	Y	Y	PT1	PN0	M0	21	0	PR	0	0	1891	1	742	56	120	0	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201634229	GC+CYST	Clinical Stage: T2	Performance Status: 0	78,8	F	W	1	1	Y	Y	1	Y	Y	PT4A	PN0	M0	12	0	NR	0	1	265	1	265	72	120	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201634238	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	65,2	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	4	0	CR	1	1	1079	1	1077	64	113	0	1	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201636138	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	61,3	M	W	1	1	Y	Y	1	Y	Y	PT3B	PN3	M1	17	6	NR	0	0	141	0	141	51	103	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201637008	GC+CYST	Clinical Stage: T2	Performance Status: 0	56,4	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	21	0	NR	0	0	2051	0	2051	85	149	0	0	0	0	1	Lum_Inf	2	Uro	Stroma-rich	2	p53	0
+P201637222	GC+CYST	Clinical Stage: T2	Performance Status: 0	79,2	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	11	0	PR	0	0	1961	0	1961	84	146	1	1	.	.	1	Lum	1	Uro	LumNS	3	Lumin	0
+P201637366	GC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	60,4	F	W	1	1	Y	Y	0	Y	Y	PT3A	PN0	M0	32	0	NR	0	1	612	1	346	72	113	0	0	.	.	1	BS	3	BaSq	Ba/Sq	2	p53	0
+P201638659	GC+CYST	Clinical Stage: T2	Performance Status: 0	74,1	M	S	1	1	Y	Y	1	Y	Y	PT3B	PN2	M0	24	3	NR	0	1	245	1	245	75	138	0	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201638938	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	57,2	M	W	1	1	Y	Y	1	Y	Y	PT2A	PN0	M0	43	0	NR	0	1	298	1	298	44	78	0	0	.	.	1		.	Uro		.		1
+P201639970	GC+CYST	Clinical Stage: T2	Performance Status: 0	56,8	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	9	0	NR	0	1	829	1	829	75	141	1	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201643272	GC+CYST	Clinical Stage: T2	Performance Status: 0	73,3	M	B	1	1	Y	Y	0	Y	Y	PT3A	PN2	M0	12	3	NR	0	0	1931	1	159	76	121	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201643882	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	68,1	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	4	0	CR	1	0	1964	0	1964	55	97	0	0	.	.	1	BS	3	Uro	Ba/Sq	1	Basal	0
+P201644034	GC+CYST	Clinical Stage: T2	Performance Status: 0	64,7	M	W	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	35	0	CR	1	0	1951	1	771	82	112	0	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201644242	GC+CYST	Clinical Stage: T2	Performance Status: 0	71,4	M	W	1	1	Y	Y	0	Y	Y	PTIS	PN0	M0	9	0	PR	0	0	1490	0	1490	75	158	0	0	.	.	1	Lum_Inf	2	Uro	LumNS	2	p53	0
+P201644895	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	58,5	F	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	33	0	PR	0	0	676	0	676	54	111	1	0	.	.	1	Lum_Inf	2	Uro	LumNS	2	p53	0
+P201654107	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	33,1	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	18	0	PR	0	0	2050	0	2050	62	107	0	0	.	.	1		.	Uro		.		1
+P201654117	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	57,7	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	23	0	CR	1	0	2212	0	2212	49	96	0	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201656212	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	75,1	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	16	0	CR	1	0	2017	0	2017	42	84	0	1	.	.	1	Lum_Inf	2	Uro	LumNS	2	p53	0
+P201661650	GC+CYST	Clinical Stage: T2	Performance Status: 1	55,8	F	U	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	12	0	CR	1	0	1264	0	1264	83	95	0	0	.	.	1		.	BaSq		.		1
+P201662727	GC+CYST	Clinical Stage: T2	Performance Status: 1	59,6	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	23	0	CR	1	0	1205	0	1205	83	132	0	0	.	.	1	Lum_Inf	2	Uro	Stroma-rich	2	p53	0
+P201663777	GC+CYST	Clinical Stage: T2	Performance Status: 0	62,4	M	W	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	29	0	CR	1	0	1907	0	1907	78	125	1	1	.	.	1	Lum	1	GU	LumU	3	Lumin	0
+P201666524	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	69,2	M	W	1	1	Y	Y	1	Y	Y	PT3B	PN1	M0	47	1	NR	0	1	411	1	231	54	111	0	0	.	.	1	BS	3	GU	Stroma-rich	2	p53	0
+P201666573	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	68,4	M	W	0	1	Y	Y	1	Y	Y	PT2A	PN1	M1	10	1	NR	0	1	748	1	736	35	183	1	1	.	.	1		.	GU		.		0
+P201666833	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	59,3	M	W	1	1	Y	Y	1	Y	Y	PT2A	PN0	M0	7	0	NR	0	0	1877	0	1877	50	111	0	0	.	.	1	Lum_Inf	2	Uro	LumNS	2	p53	0
+P201670456	GC+CYST	Clinical Stage: T2	Performance Status: 1	70,4	F	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	29	0	CR	1	0	1980	0	1980	69	118	0	0	0	0	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201672694	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	62,5	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	26	0	CR	1	1	1861	1	1861	57	102	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201672800	GC+CYST	Clinical Stage: T2	Performance Status: 0	52,4	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	1	0	CR	1	0	1909	0	1909	74	119	1	0	.	.	1	BS	3	GU	LumU	3	Lumin	0
+P201672804	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	67,6	M	W	1	1	Y	Y	1	Y	Y	PT0	PN2	M0	14	6	NR	0	1	405	1	398	55	119	1	1	.	.	1	Lum_Pap	5	Uro	LumNS	3	Lumin	0
+P201673036	GC+CYST	Clinical Stage: T2	Performance Status: 1	70,3	M	W	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	60	0	CR	1	0	1864	0	1864	96	142	0	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201674610	GC+CYST	Clinical Stage: T2	Performance Status: 1	40	M	B	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	4	0	CR	1	0	2016	0	2016	72	148	0	0	.	.	1	Lum_Inf	2	Uro	Stroma-rich	2	p53	0
+P201674614	GC+CYST	Clinical Stage: T2	Performance Status: 0	65,7	M	S	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	75	0	CR	1	0	2549	0	2549	70	118	0	0	.	.	1	BS	3	Uro	Ba/Sq	1	Basal	0
+P201675073	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	61,9	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	24	0	NR	0	1	643	1	643	40	94	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201675503	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	60,9	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	42	0	CR	1	0	1772	0	1772	46	79	1	1	.	.	1	Lum	1	Uro	LumNS	3	Lumin	0
+P201675571	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	74,8	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN2	M0	32	2	NR	0	0	1918	1	391	50	74	0	1	1	1	1	Lum_Pap	5	Uro	LumNS	2	p53	0
+P201676404	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	78,4	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	21	0	NR	0	0	2143	0	2143	54	89	0	0	0	0	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201677959	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	77,9	M	U	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	.	.	PR	0	0	1900	0	1900	50	77	0	0	.	.	1	BS	3	ScNE	Ba/Sq	1	Basal	0
+P201687658	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	67,2	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	23	0	NR	0	0	1774	0	1774	51	86	0	0	.	.	1	Lum	1	GU	Stroma-rich	2	p53	0
+P201689763	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	66,2	F	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	19	0	PR	0	0	1909	0	1909	56	90	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201690589	GC+CYST	Clinical Stage: T2	Performance Status: 1	36,8	F	W	1	1	Y	Y	0	Y	Y	PT3B	PN0	M0	35	0	NR	0	0	1937	0	1937	77	95	0	0	.	.	1		.	BaSq		.		1
+P201700054	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	49,9	M	W	1	1	Y	Y	1	Y	Y	PT1	PN0	M0	16	0	PR	0	0	1921	0	1921	46	72	0	0	.	.	1	Neuronal	4	ScNE	Ba/Sq	1	Basal	0
+P201702259	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	53	M	W	1	1	Y	Y	1	Y	Y	PT4A	PN2	M0	14	2	NR	0	0	1618	0	1618	54	123	0	1	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201702278	GC+CYST	Clinical Stage: T2	Performance Status: 0	71,4	M	W	1	1	Y	Y	1	Y	Y	PT2	PN0	M0	6	0	NR	0	0	1883	0	1883	86	123	0	0	.	.	1	BS	3	Uro	Ba/Sq	1	Basal	0
+P201704902	GC+CYST	Clinical Stage: T2	Performance Status: 0	65,5	M	W	1	1	Y	Y	1	Y	Y	PT3B	PN0	M0	5	0	NR	0	1	598	1	123	74	123	0	1	.	.	1	BS	3	Uro	Stroma-rich	2	p53	0
+P201712661	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	69,7	M	W	1	1	Y	Y	1	Y	Y	PTA	PN0	M0	25	0	PR	0	0	1772	0	1772	56	119	1	0	.	.	1	Lum	1	Uro	LumNS	3	Lumin	0
+P201713639	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	66,8	M	W	1	1	Y	Y	1	Y	Y	PT2A	PN0	M0	12	0	NR	0	0	1524	0	1524	48	90	0	0	.	.	1	Lum_Pap	5	Uro	Stroma-rich	1	Basal	0
+P201713716	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	65,8	M	W	1	1	Y	Y	1	Y	Y	PT2A	PN0	M0	15	0	NR	0	0	1644	1	622	50	112	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201714330	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	67,9	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	.	.	CR	1	0	1899	0	1899	57	104	0	0	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201720100	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	56,7	F	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	9	0	PR	0	0	1576	0	1576	50	103	0	0	.	.	1	Lum_Inf	2	GU	Stroma-rich	2	p53	0
+P201720413	GC+CYST	Clinical Stage: T2	Performance Status: 0	63,9	M	W	1	1	Y	Y	0	Y	Y	PTIS	PN0	M0	15	0	PR	0	0	1970	0	1970	78	160	0	0	.	.	1	Lum_Inf	2	GU	Stroma-rich	3	Lumin	0
+P201722036	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	55,7	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	33	0	CR	1	0	1297	0	1297	49	89	0	0	.	.	1	Lum_Pap	5	Uro	Stroma-rich	2	p53	0
+P201723256	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	74,4	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN2	M0	28	2	NR	0	1	1214	1	943	70	99	0	1	.	.	1	Lum_Inf	2	Uro	Stroma-rich	2	p53	0
+P201723659	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	62,5	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	12	0	CR	1	0	1779	0	1779	62	126	1	0	.	.	1	Lum_Pap	5	GU	LumU	3	Lumin	0
+P201724502	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	44,9	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	8	0	CR	1	0	1893	1	452	50	84	1	1	.	.	1	Lum	1	Uro	LumNS	2	p53	0
+P201728208	GC+CYST	Clinical Stage: T2	Performance Status: 1	55	M	U	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	14	0	CR	1	0	1926	0	1926	72	119	0	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201732520	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	61	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	38	0	CR	1	0	1907	0	1907	53	94	0	1	.	.	1	BS	3	Uro	Ba/Sq	3	Lumin	0
+P201733005	GC+CYST	Clinical Stage: T2	Performance Status: 0	67,6	M	W	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	38	0	CR	1	0	1959	0	1959	72	121	0	0	.	.	1	BS	3	GU	Ba/Sq	1	Basal	0
+P201733970	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	68,4	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	5	0	PR	1	0	1804	1	1677	47	103	1	1	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201735826	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	70,4	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN2	M0	9	4	NR	0	1	394	1	374	50	101	0	0	.	.	1	Lum_Pap	5	GU	LumU	3	Lumin	0
+P201736627	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	61	M	S	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	36	0	NR	0	0	1505	0	1505	54	105	0	0	.	.	1	BS	3	Uro	Ba/Sq	2	p53	0
+P201739908	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	65,1	M	W	1	1	Y	Y	1	Y	Y	PT4A	PN2	M0	39	3	NR	0	0	1551	0	1551	46	84	0	1	.	.	1	Lum_Pap	5	Uro	LumNS	2	p53	0
+P201741513	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	74,8	F	W	1	1	Y	Y	1	Y	Y	PT3	PN0	M0	42	0	NR	0	0	1848	1	1057	49	104	0	1	.	.	1	Lum_Inf	2	Uro	Stroma-rich	2	p53	0
+P201743980	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	54,8	F	W	1	1	Y	Y	1	Y	Y	PT1	PN0	M0	11	0	PR	0	0	1651	0	1651	55	124	0	0	.	.	1	Lum	1	Uro	LumP	3	Lumin	0
+P201745861	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	63,6	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	26	0	CR	1	1	692	1	692	47	96	1	1	.	.	1	Lum_Inf	2	GU	Stroma-rich	2	p53	0
+P201746833	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	77,3	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	21	0	NR	0	1	1278	1	243	60	122	1	1	.	.	1	Lum_Pap	5	Uro	LumNS	3	Lumin	0
+P201748536	GC+CYST	Clinical Stage: T2	Performance Status: 0	62,1	M	W	1	1	Y	Y	0	Y	Y	PT4A	PN0	M0	4	0	NR	0	0	442	1	227	80	141	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201748990	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	46,5	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	24	0	PR	0	0	1447	0	1447	43	97	0	1	.	.	1	Lum	1	GU	LumNS	3	Lumin	0
+P201749306	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	69,8	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	9	0	NR	0	1	1148	1	799	66	111	0	1	.	.	1	Lum_Pap	5	Uro	LumNS	2	p53	0
+P201749533	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	76	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	40	0	CR	1	1	127	1	127	57	119	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201750226	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	58,6	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	21	0	CR	1	0	1820	0	1820	50	146	0	0	.	.	1	Lum	1	Uro	LumNS	3	Lumin	0
+P201750638	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	69,3	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	6	0	CR	1	0	1573	0	1573	55	102	1	0	.	.	1	BS	3	BaSq	Ba/Sq	2	p53	0
+P201751910	GC+CYST	Clinical Stage: T2	Performance Status: 0	62,4	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	29	0	NR	0	0	1563	0	1563	77	127	0	1	.	.	1	Lum_Pap	5	Uro	LumNS	3	Lumin	0
+P201753572	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	63,8	F	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	10	0	NR	0	0	1825	1	570	45	97	1	1	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201755521	GC+CYST	Clinical Stage: T2	Performance Status: 0	62,7	M	W	1	1	Y	Y	0	Y	Y	PTIS	PN0		0	0	PR	0	0	1697	0	1697	71	121	0	0	.	.	1	Lum_Inf	2	Uro	Stroma-rich	2	p53	0
+P201758996	GC+CYST	Clinical Stage: T2	Performance Status: 0	57,9	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M1	16	0	CR	0	0	1926	0	1926	53	109	0	0	.	.	1	Lum_Pap	5	GU	LumU	2	p53	0
+P201759655	GC+CYST	Clinical Stage: T2	Performance Status: 1	67,7	F	S	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	15	0	CR	1	0	995	0	995	77	119	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201761388	GC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	36,9	M	W	1	1	Y	Y	0	Y	Y	PT2A	PN0	M0	24	0	NR	0	1	388	1	257	72	110	0	0	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201762952	GC+CYST	Clinical Stage: T2	Performance Status: 0	49,2	M	W	1	1	Y	Y	0	Y	Y	PT2A	PN0	M0	25	0	NR	0	0	1978	0	1978	80	121	1	0	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201763604	GC+CYST	Clinical Stage: T2	Performance Status: 1	56,9	M	W	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	15	0	CR	1	0	1799	0	1799	75	109	0	0	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201764065	GC+CYST	Clinical Stage: T2	Performance Status: 0	76,4	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	14	0	PR	0	0	1820	0	1820	76	132	0	0	.	.	1	Lum_Inf	2	Mes	Ba/Sq	1	Basal	0
+P201764296	GC+CYST	Clinical Stage: T2	Performance Status: 0	55,9	M	U	1	1	Y	Y	0	Y	Y	PT2A	PN0	M0	83	0	NR	0	0	1612	0	1612	71	105	0	1	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201764348	GC+CYST	Clinical Stage: T2	Performance Status: 0	76,9	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	11	0	NR	0	0	1812	0	1812	77	140	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201766238	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	69,5	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN0	M0	44	0	NR	0	0	1835	0	1835	56	91	0	0	.	.	1	Lum_Inf	2	Uro	LumNS	2	p53	0
+P201768928	GC+CYST	Clinical Stage: T2	Performance Status: 0	62,3	F	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	10	0	CR	1	0	1237	0	1237	75	127	1	1	.	.	1	Lum_Pap	5	Uro	LumP	3	Lumin	0
+P201770486	GC+CYST	Clinical Stage: T2	Performance Status: 0	77	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	15	0	CR	1	0	1926	0	1926	79	130	0	0	.	.	1	Lum_Pap	5	Uro	LumNS	2	p53	0
+P201771305	GC+CYST	Clinical Stage: T2	Performance Status: 0	62,1	F	W	1	1	Y	Y	0	Y	Y	PT3A	PN0	M0	16	0	NR	0	1	228	1	203	78	107	0	0	.	.	1	BS	3	Uro	Ba/Sq	1	Basal	0
+P201773543	GC+CYST	Clinical Stage: T2	Performance Status: 0	62,2	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	42	0	NR	0	0	1637	0	1637	71	110	1	1	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0
+P201775693	GC+CYST	Clinical Stage: T2	Performance Status: 0	68,4	M	W	1	1	Y	Y	1	Y	Y	PT4A	PN2	M0	16	12	NR	0	1	475	1	322	81	136	0	0	.	.	1	Lum_Inf	2	Uro	LumNS	3	Lumin	0
+P201781082	GC+CYST	Clinical Stage: T2	Performance Status: 0	72,2	M	W	1	1	Y	Y	1	Y	Y	PTIS	PN0	M0	29	0	PR	0	0	1635	0	1635	76	112	0	0	.	.	1	Lum_Pap	5	GU	LumNS	1	Basal	0
+P201781999	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	55,2	M	W	1	1	Y	Y	1	Y	Y	PT1	PN0	M0	1	0	PR	0	1	1915	1	1486	45	92	0	1	.	.	1	BS	3	Uro	Ba/Sq	1	Basal	0
+P201783106	GC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	64	M	W	1	1	Y	Y	1	Y	Y	PT3B	PN2	M0	36	2	NR	0	0	278	0	278	85	123	0	1	.	.	1	Lum_Pap	5	Uro	LumNS	2	p53	0
+P201784150	GC+CYST	Clinical Stage: T2	Performance Status: 1	68,7	M	W	1	1	Y	Y	1	Y	Y	PT2A	PN1	M0	8	1	NR	0	0	1831	0	1831	112	167	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201784204	GC+CYST	Clinical Stage: T2	Performance Status: 0	69	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN0	M0	27	0	NR	0	1	794	1	567	76	116	0	0	.	.	1	Lum_Inf	2	GU	Stroma-rich	2	p53	0
+P201784321	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	55,4	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	22	0	CR	1	0	2043	0	2043	48	94	1	0	.	.	1	Lum_Pap	5	GU	Stroma-rich	2	p53	0
+P201787951	GC+CYST	Clinical Stage: T2	Performance Status: 0	65,9	M	W	1	1	Y	Y	1	Y	Y	PT2B	PN1	M0	24	1	NR	0	1	1481	1	292	90	123	1	1	.	.	1	Lum_Pap	5	GU	LumU	3	Lumin	0
+P201789259	DDMVAC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	69,3	M	W	1	1	Y	Y	1	Y	Y	PT3A	PN1	M0	38	1	NR	0	1	797	1	766	71	124	0	1	.	.	1	Lum_Pap	5	Uro	LumNS	2	p53	0
+P201789570	GC+CYST	Clinical Stage: T3 or T4a	Performance Status: 0	66,3	F	U	1	1	Y	Y	0	Y	Y	PT0	PN0	M0	14	0	CR	1	1	251	1	196	71	95	0	0	.	.	1	BS	3	BaSq	Ba/Sq	1	Basal	0
+P201791294	GC+CYST	Clinical Stage: T2	Performance Status: 1	71,8	M	W	1	1	Y	Y	0	Y	Y	PT1	PN1	M0	14	1	NR	0	0	1932	1	1606	74	133	0	0	.	.	1	Lum	1	Uro	LumNS	3	Lumin	0
+P201794388	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 0	65,1	M	W	1	1	Y	Y	1	Y	Y	PT0	PN0	M0	4	0	CR	1	0	1883	1	761	56	114	1	0	.	.	1	BS	3	Uro	Ba/Sq	1	Basal	0
+P201796801	DDMVAC+CYST	Clinical Stage: T2	Performance Status: 1	55,5	M	W	1	1	Y	Y	1	Y	Y	PTA	PN0	M0	20	0	PR	0	0	1909	0	1909	56	91	0	1	.	.	1	Lum_Pap	5	Uro	LumP	2	p53	0

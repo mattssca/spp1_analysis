@@ -1,0 +1,31 @@
+id	Your Sample Name	Comment	Cell line	SPP1 profile	Cisplatine
+c001	SCABER_CTRL_1	Untreated cells	SCaBER	No	No
+c002	SCABER_CISPL_1	treated cells	SCaBER	No	Yes
+c003	SCABER_RSPP1_1	treated cells	SCaBER	Recombinant protein	No
+c004	SCABER_RSPP1_CISPL_1	treated cells	SCaBER	Recombinant protein	Yes
+c005	SCABER_OESPP1_1	Untreated cells	SCaBER	Stable overexpression	No
+c006	SCABER_OESPP1_CISPL_1	treated cells	SCaBER	Stable overexpression	Yes
+c007	VMCUB1_CTRL_1	Untreated cells	VMCUB1	Express by the cell line	No
+c008	VMCUB1_CISPL_1	treated cells	VMCUB1	Express by the cell line	Yes
+c009	VMCUB1_SISPP1_1	Untreated cells	VMCUB1	Inhibtion with siRNA	No
+c010	VMCUB1_SISPP1_CISPL_1	treated cells	VMCUB1	Inhibtion with siRNA	Yes
+c011	SCABER_CTRL_2	Untreated cells	SCaBER	No	No
+c012	SCABER_CISPL_2	treated cells	SCaBER	No	Yes
+c013	SCABER_RSPP1_2	treated cells	SCaBER	Recombinant protein	No
+c014	SCABER_RSPP1_CISPL_2	treated cells	SCaBER	Recombinant protein	Yes
+c015	SCABER_OESPP1_2	Untreated cells	SCaBER	Stable overexpression	No
+c016	SCABER_OESPP1_CISPL_2	treated cells	SCaBER	Stable overexpression	Yes
+c017	VMCUB1_CTRL_2	Untreated cells	VMCUB1	Express by the cell line	No
+c018	VMCUB1_CISPL_2	treated cells	VMCUB1	Express by the cell line	Yes
+c019	VMCUB1_SISPP1_2	Untreated cells	VMCUB1	Inhibtion with siRNA	No
+c020	VMCUB1_SISPP1_CISPL_2	treated cells	VMCUB1	Inhibtion with siRNA	Yes
+c021	SCABER_CTRL_3	Untreated cells	SCaBER	No	No
+c022	SCABER_CISPL_3	treated cells	SCaBER	No	Yes
+c023	SCABER_RSPP1_3	treated cells	SCaBER	Recombinant protein	No
+c024	SCABER_RSPP1_CISPL_3	treated cells	SCaBER	Recombinant protein	Yes
+c025	SCABER_OESPP1_3	Untreated cells	SCaBER	Stable overexpression	No
+c026	SCABER_OESPP1_CISPL_3	treated cells	SCaBER	Stable overexpression	Yes
+c027	VMCUB1_CTRL_3	Untreated cells	VMCUB1	Express by the cell line	No
+c028	VMCUB1_CISPL_3	treated cells	VMCUB1	Express by the cell line	Yes
+c029	VMCUB1_SISPP1_3	Untreated cells	VMCUB1	Inhibtion with siRNA	No
+c030	VMCUB1_SISPP1_CISPL_3	treated cells	VMCUB1	Inhibtion with siRNA	Yes
