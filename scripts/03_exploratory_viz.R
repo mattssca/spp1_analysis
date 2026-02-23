@@ -13,19 +13,6 @@ load("C:/Users/matts/Desktop/projects/spp1/new_analysis/data/predicted.Rdata")
 ####################################################################################################
 ## Prepare Metadata and Annotations
 ####################################################################################################
-# Add replicate information and create sorting variables
-metadata <- metadata %>%
-  mutate(
-    replicate = str_extract(sample_id, "\\d+$"),
-    comment_order = factor(comment, levels = c("Untreated cells", "treated cells")),
-    cisplatine_order = factor(cisplatine, levels = c("No", "Yes")),
-    spp1_profile_order = factor(spp1_profile, 
-                                levels = c("No", "Express by the cell line", 
-                                           "Stable overexpression", "Recombinant protein", 
-                                           "Inhibtion with siRNA"))
-  ) %>%
-  arrange(replicate, comment_order, cisplatine_order, spp1_profile_order)
-
 # Prepare annotation data frame
 annotation_col <- metadata %>%
   select(sample_id, cell_line, spp1_profile, cisplatine, comment, replicate) %>%
