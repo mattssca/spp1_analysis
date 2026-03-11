@@ -1,0 +1,10 @@
+name: spp1-gene-expression-explorer
+title: SPP1 Gene Expression Explorer
+username: mattsada
+account: mattsada
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 16872801
+bundleId: 11694119
+url: https://mattsada.shinyapps.io/spp1-gene-expression-explorer/
+version: 1

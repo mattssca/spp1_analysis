@@ -3,6 +3,7 @@ library(shiny)
 library(shinydashboard)
 library(tidyverse)
 library(ComplexHeatmap)
+library(InteractiveComplexHeatmap)
 library(circlize)
 library(grid)
 
@@ -38,6 +39,10 @@ visualize_genes_with_annotations <- function(
     cluster_rows = TRUE,
     cluster_columns = FALSE,
     split_by = "replicate",
+    sort_by = NULL,
+    auto_scale = TRUE,
+    expr_min = NULL,
+    expr_max = NULL,
     show_annotations = c("cell_line", "spp1_profile", "cisplatine", "comment", "replicate")
 ) {
   meta_sub <- this_metadata
@@ -79,9 +84,16 @@ visualize_genes_with_annotations <- function(
   
   mat <- mat[, meta_sub$sample_id, drop = FALSE]
   
-  expr_min <- min(mat, na.rm = TRUE)
-  expr_med <- median(mat, na.rm = TRUE)
-  expr_max <- max(mat, na.rm = TRUE)
+  # Set expression color scale
+  if (auto_scale) {
+    expr_min <- min(mat, na.rm = TRUE)
+    expr_max <- max(mat, na.rm = TRUE)
+  } else {
+    if (is.null(expr_min)) expr_min <- 0
+    if (is.null(expr_max)) expr_max <- 5
+  }
+  expr_med <- (expr_min + expr_max) / 2
+  
   expr_col_fun <- circlize::colorRamp2(
     c(expr_min, expr_med, expr_max), 
     c("#4DF76F", "black", "#F74D4D")
@@ -90,6 +102,19 @@ visualize_genes_with_annotations <- function(
   annotation_col <- meta_sub %>%
     select(sample_id, cell_line, spp1_profile, cisplatine, comment, replicate) %>%
     column_to_rownames("sample_id")
+  
+  # Sort samples if sort_by is specified (before creating annotations)
+  if (!cluster_columns && !is.null(sort_by)) {
+    # Remove "none" values and keep only valid column names
+    sort_vars <- sort_by[sort_by != "none" & sort_by %in% colnames(annotation_col)]
+    
+    if (length(sort_vars) > 0) {
+      # Create a multi-level sort using do.call and order
+      sort_order <- do.call(order, lapply(sort_vars, function(var) annotation_col[[var]]))
+      annotation_col <- annotation_col[sort_order, , drop = FALSE]
+      mat <- mat[, rownames(annotation_col), drop = FALSE]
+    }
+  }
   
   annotation_colors <- list(
     cell_line = c("SCaBER" = "#6F8F72", "VMCUB1" = "#FF7444"),
@@ -222,8 +247,42 @@ ui <- dashboardPage(
                                     "Cisplatine" = "cisplatine",
                                     "Comment" = "comment"),
                         selected = "replicate"),
+            
+            h4("Sort Samples (hierarchical):"),
+            selectInput("sort_by_1", "Primary sort:",
+                        choices = c("None" = "none", 
+                                    "Replicate" = "replicate", 
+                                    "Cell Line" = "cell_line", 
+                                    "SPP1 Profile" = "spp1_profile",
+                                    "Cisplatine" = "cisplatine",
+                                    "Comment" = "comment"),
+                        selected = "none"),
+            selectInput("sort_by_2", "Secondary sort:",
+                        choices = c("None" = "none", 
+                                    "Replicate" = "replicate", 
+                                    "Cell Line" = "cell_line", 
+                                    "SPP1 Profile" = "spp1_profile",
+                                    "Cisplatine" = "cisplatine",
+                                    "Comment" = "comment"),
+                        selected = "none"),
+            selectInput("sort_by_3", "Tertiary sort:",
+                        choices = c("None" = "none", 
+                                    "Replicate" = "replicate", 
+                                    "Cell Line" = "cell_line", 
+                                    "SPP1 Profile" = "spp1_profile",
+                                    "Cisplatine" = "cisplatine",
+                                    "Comment" = "comment"),
+                        selected = "none"),
             checkboxInput("cluster_rows_viz", "Cluster rows", value = TRUE),
             checkboxInput("cluster_cols_viz", "Cluster columns", value = FALSE),
+            
+            h4("Expression Scale:"),
+            checkboxInput("auto_scale_expr", "Auto-scale to data", value = TRUE),
+            conditionalPanel(
+              condition = "!input.auto_scale_expr",
+              sliderInput("expr_range", "Manual expression range:",
+                         min = 0, max = 20, value = c(0, 5), step = 0.1)
+            ),
             
             actionButton("run_viz", "Visualize Genes", class = "btn-primary")
           ),
@@ -233,7 +292,9 @@ ui <- dashboardPage(
             width = 9,
             solidHeader = TRUE,
             status = "info",
-            plotOutput("gene_viz_heatmap", height = "700px")
+            downloadButton("download_pdf", "Download PDF", class = "btn-success", 
+                          style = "margin-bottom: 10px;"),
+            InteractiveComplexHeatmapOutput("gene_viz_heatmap")
           )
         )
       )
@@ -285,6 +346,10 @@ server <- function(input, output, session) {
     
     withProgress(message = 'Creating visualization...', value = 0, {
       tryCatch({
+        # Get expression range values, use defaults if auto_scale is TRUE or slider not available
+        expr_min_val <- if(!is.null(input$expr_range)) input$expr_range[1] else 0
+        expr_max_val <- if(!is.null(input$expr_range)) input$expr_range[2] else 5
+        
         visualize_genes_with_annotations(
           expr_data = expr_data_getmm,
           this_metadata = metadata,
@@ -296,7 +361,11 @@ server <- function(input, output, session) {
           replicate = if(length(input$filter_replicate) > 0) input$filter_replicate else NULL,
           cluster_rows = input$cluster_rows_viz,
           cluster_columns = input$cluster_cols_viz,
-          split_by = if(input$split_by_var == "none") NULL else input$split_by_var
+          split_by = if(input$split_by_var == "none") NULL else input$split_by_var,
+          sort_by = c(input$sort_by_1, input$sort_by_2, input$sort_by_3),
+          auto_scale = input$auto_scale_expr,
+          expr_min = expr_min_val,
+          expr_max = expr_max_val
         )
       }, error = function(e) {
         showNotification(paste("Error:", e$message), type = "error")
@@ -305,10 +374,24 @@ server <- function(input, output, session) {
     })
   })
   
-  output$gene_viz_heatmap <- renderPlot({
+  # Gene Visualization - Interactive Heatmap
+  observeEvent(viz_results(), {
     req(viz_results())
-    draw(viz_results()$heatmap)
+    makeInteractiveComplexHeatmap(input, output, session, viz_results()$heatmap, "gene_viz_heatmap")
   })
+  
+  # Download PDF handler
+  output$download_pdf <- downloadHandler(
+    filename = function() {
+      paste0("gene_expression_heatmap_", Sys.Date(), ".pdf")
+    },
+    content = function(file) {
+      req(viz_results())
+      pdf(file, width = 14, height = 10)
+      draw(viz_results()$heatmap)
+      dev.off()
+    }
+  )
 }
 
 # ============================================================================
