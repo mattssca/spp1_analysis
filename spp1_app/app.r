@@ -184,7 +184,7 @@ visualize_genes_with_annotations <- function(
 ui <- dashboardPage(
   skin = "blue",
   
-  dashboardHeader(title = "CD44 and Integrins - Gene Expression Viewer"),
+  dashboardHeader(title = "Gene Expression Viewer"),
   
   dashboardSidebar(disable = TRUE),
   
@@ -196,8 +196,8 @@ ui <- dashboardPage(
             solidHeader = TRUE,
             status = "primary",
             
-            h4("CD44 and Integrins"),
-            textAreaInput("genes_input", "Genes of Interest (one per line):",
+            h4("Genes Input"),
+            textAreaInput("genes_input", "Genes of Interest (one per line, default is CD44 and ITGa/b):",
                           value = "CD44\nITGA1\nITGA10\nITGA11\nITGA2\nITGA2B\nITGA3\nITGA4\nITGA5\nITGA6\nITGA7\nITGA8\nITGA9\nITGAD\nITGAE\nITGAL\nITGAM\nITGAV\nITGAX\nITGB1\nITGB1BP1\nITGB1BP2\nITGB2\nITGB3\nITGB3BP\nITGB4\nITGB5\nITGB6\nITGB7\nITGB8\nITGBL1",
                           rows = 8),
             
@@ -229,7 +229,7 @@ ui <- dashboardPage(
           ),
           
           box(
-            title = "CD44 and Integrins - Gene Expression Heatmap",
+            title = "Gene Expression Heatmap",
             width = 9,
             solidHeader = TRUE,
             status = "info",
