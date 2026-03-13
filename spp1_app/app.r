@@ -6,14 +6,17 @@ library(ComplexHeatmap)
 library(InteractiveComplexHeatmap)
 library(circlize)
 library(grid)
+library(plotly)
+library(DT)
 
 # ============================================================================
 # BUNDLED DATA
 # ============================================================================
 
 # Load data from the data folder
-load("data/expr_data_getmm.Rdata")  # Should contain expr_data_getmm
-load("data/metadata.Rdata")   # Should contain metadata
+load("data/expr_data_getmm.Rdata")  
+load("data/metadata.Rdata")
+load("data/deg_results.Rdata")
 
 # Verify data is loaded
 if (!exists("expr_data_getmm")) {
@@ -211,9 +214,19 @@ ui <- dashboardPage(
   
   dashboardHeader(title = "Gene Expression Viewer"),
   
-  dashboardSidebar(disable = TRUE),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Gene Expression Heatmap", tabName = "heatmap", icon = icon("table")),
+      menuItem("DEG Comparison", tabName = "deg_comparison", icon = icon("chart-line")),
+      menuItem("SPP1 Correlation", tabName = "spp1_correlation", icon = icon("project-diagram")),
+      menuItem("Gene Expression Profile", tabName = "gene_profile", icon = icon("chart-area"))
+    )
+  ),
   
   dashboardBody(
+    tabItems(
+      # First tab - Gene Expression Heatmap
+      tabItem(tabName = "heatmap",
         fluidRow(
           box(
             title = "Visualization Parameters",
@@ -297,8 +310,186 @@ ui <- dashboardPage(
             InteractiveComplexHeatmapOutput("gene_viz_heatmap")
           )
         )
+      ),
+      
+      # Second tab - DEG Comparison
+      tabItem(tabName = "deg_comparison",
+        fluidRow(
+          box(
+            title = "DEG Comparison Scatter Plot",
+            width = 12,
+            solidHeader = TRUE,
+            status = "primary",
+            
+            fluidRow(
+              column(3,
+                h4("Select Comparisons"),
+                selectInput("x_comparison", "X-axis (logFC):",
+                            choices = NULL),
+                selectInput("y_comparison", "Y-axis (logFC):",
+                            choices = NULL),
+                hr(),
+                h4("Filtering Options"),
+                numericInput("pvalue_threshold", "P-value threshold (genes with p < threshold):",
+                            min = 0, max = 1, value = 0.05, step = 0.001),
+                numericInput("adjp_threshold", "Adjusted P-value threshold (genes with adj.p < threshold):",
+                            min = 0, max = 1, value = 0.05, step = 0.01),
+                checkboxInput("show_sig_only", "Show only significant genes", value = FALSE),
+                helpText("Lower thresholds = more stringent filtering (e.g., 0.001 for very significant genes)")
+              ),
+              column(9,
+                plotlyOutput("deg_scatter", height = "600px"),
+                hr(),
+                h4("Top 10 Genes by Absolute logFC"),
+                DTOutput("top_genes_table")
+              )
+            )
+          )
+        )
+      ),
+      
+      # Third tab - SPP1 Correlation Volcano Plot
+      tabItem(tabName = "spp1_correlation",
+        fluidRow(
+          box(
+            title = "Sample Selection",
+            width = 3,
+            solidHeader = TRUE,
+            status = "primary",
+            
+            h4("Filters:"),
+            checkboxGroupInput("filter_cell_line_spp1", "Cell Line:",
+                               choices = NULL),
+            checkboxGroupInput("filter_spp1_profile_spp1", "SPP1 Profile:",
+                               choices = NULL),
+            checkboxGroupInput("filter_cisplatine_spp1", "Cisplatine:",
+                               choices = NULL),
+            checkboxGroupInput("filter_comment_spp1", "Comment:",
+                               choices = NULL),
+            checkboxGroupInput("filter_replicate_spp1", "Replicate:",
+                               choices = NULL),
+            hr(),
+            h4("Correlation Thresholds:"),
+            numericInput("cor_threshold", "Correlation threshold (|r| > threshold):",
+                        min = 0, max = 1, value = 0.5, step = 0.05),
+            numericInput("pval_threshold_cor", "P-value threshold (p < threshold):",
+                        min = 0, max = 1, value = 0.05, step = 0.001),
+            helpText("Higher correlation threshold = more stringent filtering"),
+            hr(),
+            h4("Query Specific Gene"),
+            selectizeInput("query_gene_spp1", "Search for a gene:",
+                          choices = NULL,
+                          options = list(
+                            placeholder = 'Type to search...',
+                            maxOptions = 50
+                          )),
+            conditionalPanel(
+              condition = "input.query_gene_spp1 != null && input.query_gene_spp1 != ''",
+              actionButton("clear_gene_query", "Clear Selection", class = "btn-warning btn-sm")
+            ),
+            hr(),
+            actionButton("run_spp1_cor", "Generate Correlation Plot", class = "btn-primary")
+          ),
+          
+          box(
+            title = "SPP1 Correlation Volcano Plot",
+            width = 9,
+            solidHeader = TRUE,
+            status = "info",
+            plotlyOutput("spp1_volcano", height = "500px"),
+            conditionalPanel(
+              condition = "input.query_gene_spp1 != null && input.query_gene_spp1 != ''",
+              hr(),
+              h4("Correlation Details for Selected Gene"),
+              fluidRow(
+                column(6,
+                  DTOutput("gene_correlation_details")
+                ),
+                column(6,
+                  plotlyOutput("gene_spp1_scatter", height = "300px")
+                )
+              )
+            ),
+            hr(),
+            fluidRow(
+              column(6,
+                h4("Top 10 Positively Correlated Genes"),
+                DTOutput("top_positive_genes")
+              ),
+              column(6,
+                h4("Top 10 Negatively Correlated Genes"),
+                DTOutput("top_negative_genes")
+              )
+            )
+          )
+        )
+      ),
+      
+      # Fourth tab - Gene Expression Profile
+      tabItem(tabName = "gene_profile",
+        fluidRow(
+          box(
+            title = "Gene Selection",
+            width = 3,
+            solidHeader = TRUE,
+            status = "primary",
+            
+            h4("Select Gene"),
+            selectizeInput("selected_gene", "Gene:",
+                          choices = NULL,
+                          options = list(
+                            placeholder = 'Type to search for a gene...',
+                            maxOptions = 50
+                          )),
+            hr(),
+            h4("Grouping Variable"),
+            selectInput("group_by_var", "Group samples by:",
+                        choices = c("Cell Line" = "cell_line",
+                                    "SPP1 Profile" = "spp1_profile",
+                                    "Cisplatine" = "cisplatine",
+                                    "Comment" = "comment",
+                                    "Replicate" = "replicate"),
+                        selected = "spp1_profile"),
+            selectInput("color_by_var", "Color by:",
+                        choices = c("Cell Line" = "cell_line",
+                                    "SPP1 Profile" = "spp1_profile",
+                                    "Cisplatine" = "cisplatine",
+                                    "Comment" = "comment",
+                                    "Replicate" = "replicate",
+                                    "Same as grouping" = "same"),
+                        selected = "cell_line"),
+            hr(),
+            h4("Filters:"),
+            checkboxGroupInput("filter_cell_line_profile", "Cell Line:",
+                               choices = NULL),
+            checkboxGroupInput("filter_spp1_profile_profile", "SPP1 Profile:",
+                               choices = NULL),
+            checkboxGroupInput("filter_cisplatine_profile", "Cisplatine:",
+                               choices = NULL),
+            checkboxGroupInput("filter_comment_profile", "Comment:",
+                               choices = NULL),
+            checkboxGroupInput("filter_replicate_profile", "Replicate:",
+                               choices = NULL),
+            hr(),
+            checkboxInput("show_points", "Show individual points", value = TRUE),
+            actionButton("run_gene_profile", "Generate Profile", class = "btn-primary")
+          ),
+          
+          box(
+            title = "Gene Expression Profile",
+            width = 9,
+            solidHeader = TRUE,
+            status = "info",
+            plotlyOutput("gene_profile_plot", height = "600px"),
+            hr(),
+            h4("Summary Statistics"),
+            DTOutput("gene_profile_stats")
+          )
+        )
       )
     )
+  )
+)
 
 # ============================================================================
 # SHINY SERVER
@@ -310,31 +501,54 @@ server <- function(input, output, session) {
   observe({
     req(exists("metadata"))
     
-    # Update filter choices
+    # Update filter choices for all tabs
     if ("cell_line" %in% colnames(metadata)) {
       cell_lines <- unique(metadata$cell_line)
       updateCheckboxGroupInput(session, "filter_cell_line", choices = cell_lines, selected = cell_lines)
+      updateCheckboxGroupInput(session, "filter_cell_line_spp1", choices = cell_lines, selected = cell_lines)
+      updateCheckboxGroupInput(session, "filter_cell_line_profile", choices = cell_lines, selected = cell_lines)
     }
     
     if ("spp1_profile" %in% colnames(metadata)) {
       spp1_profiles <- unique(metadata$spp1_profile)
       updateCheckboxGroupInput(session, "filter_spp1_profile", choices = spp1_profiles, selected = spp1_profiles)
+      updateCheckboxGroupInput(session, "filter_spp1_profile_spp1", choices = spp1_profiles, selected = spp1_profiles)
+      updateCheckboxGroupInput(session, "filter_spp1_profile_profile", choices = spp1_profiles, selected = spp1_profiles)
     }
     
     if ("cisplatine" %in% colnames(metadata)) {
       cisplatine_vals <- unique(metadata$cisplatine)
       updateCheckboxGroupInput(session, "filter_cisplatine", choices = cisplatine_vals, selected = cisplatine_vals)
+      updateCheckboxGroupInput(session, "filter_cisplatine_spp1", choices = cisplatine_vals, selected = cisplatine_vals)
+      updateCheckboxGroupInput(session, "filter_cisplatine_profile", choices = cisplatine_vals, selected = cisplatine_vals)
     }
     
     if ("comment" %in% colnames(metadata)) {
       comments <- unique(metadata$comment)
       updateCheckboxGroupInput(session, "filter_comment", choices = comments, selected = comments)
+      updateCheckboxGroupInput(session, "filter_comment_spp1", choices = comments, selected = comments)
+      updateCheckboxGroupInput(session, "filter_comment_profile", choices = comments, selected = comments)
     }
     
     if ("replicate" %in% colnames(metadata)) {
       replicates <- unique(metadata$replicate)
       updateCheckboxGroupInput(session, "filter_replicate", choices = replicates, selected = replicates)
+      updateCheckboxGroupInput(session, "filter_replicate_spp1", choices = replicates, selected = replicates)
+      updateCheckboxGroupInput(session, "filter_replicate_profile", choices = replicates, selected = replicates)
     }
+  })
+  
+  # Initialize gene choices for gene profile tab
+  observe({
+    req(exists("expr_data_getmm"))
+    gene_list <- sort(rownames(expr_data_getmm))
+    updateSelectizeInput(session, "selected_gene", choices = gene_list, server = TRUE)
+    updateSelectizeInput(session, "query_gene_spp1", choices = gene_list, server = TRUE)
+  })
+  
+  # Clear gene query when button is clicked
+  observeEvent(input$clear_gene_query, {
+    updateSelectizeInput(session, "query_gene_spp1", selected = "")
   })
   
   # Gene Visualization
@@ -392,6 +606,635 @@ server <- function(input, output, session) {
       dev.off()
     }
   )
+  
+  # ============================================================================
+  # DEG COMPARISON TAB
+  # ============================================================================
+  
+  # Initialize comparison choices based on deg_results
+  observe({
+    req(exists("deg_results"))
+    
+    comparison_names <- names(deg_results)
+    updateSelectInput(session, "x_comparison", 
+                      choices = comparison_names,
+                      selected = comparison_names[1])
+    updateSelectInput(session, "y_comparison", 
+                      choices = comparison_names,
+                      selected = comparison_names[min(2, length(comparison_names))])
+  })
+  
+  # Prepare merged data for scatter plot
+  scatter_data <- reactive({
+    req(input$x_comparison, input$y_comparison)
+    
+    x_data <- deg_results[[input$x_comparison]] %>%
+      select(gene, logFC_x = logFC, P.Value_x = P.Value, adj.P.Val_x = adj.P.Val)
+    
+    y_data <- deg_results[[input$y_comparison]] %>%
+      select(gene, logFC_y = logFC, P.Value_y = P.Value, adj.P.Val_y = adj.P.Val)
+    
+    # Merge the two datasets
+    merged <- inner_join(x_data, y_data, by = "gene") %>%
+      mutate(
+        sig_category = case_when(
+          P.Value_x < input$pvalue_threshold & P.Value_y < input$pvalue_threshold & 
+            adj.P.Val_x < input$adjp_threshold & adj.P.Val_y < input$adjp_threshold ~ "Sig in both (p & adj.p)",
+          P.Value_x < input$pvalue_threshold & P.Value_y < input$pvalue_threshold ~ "Sig in both (p-value only)",
+          adj.P.Val_x < input$adjp_threshold & adj.P.Val_y < input$adjp_threshold ~ "Sig in both (adj.p only)",
+          P.Value_x < input$pvalue_threshold | P.Value_y < input$pvalue_threshold ~ "Sig in one (p-value)",
+          adj.P.Val_x < input$adjp_threshold | adj.P.Val_y < input$adjp_threshold ~ "Sig in one (adj.p)",
+          TRUE ~ "Not significant"
+        ),
+        min_pvalue = pmin(P.Value_x, P.Value_y),
+        min_adjp = pmin(adj.P.Val_x, adj.P.Val_y)
+      )
+    
+    if (input$show_sig_only) {
+      merged <- merged %>%
+        filter(sig_category != "Not significant")
+    }
+    
+    merged
+  })
+  
+  # Create scatter plot
+  output$deg_scatter <- renderPlotly({
+    req(scatter_data())
+    
+    data <- scatter_data()
+    
+    # Define colors for significance categories
+    color_mapping <- c(
+      "Sig in both (p & adj.p)" = "#e41a1c",
+      "Sig in both (p-value only)" = "#ff7f00",
+      "Sig in both (adj.p only)" = "#984ea3",
+      "Sig in one (p-value)" = "#4daf4a",
+      "Sig in one (adj.p)" = "#377eb8",
+      "Not significant" = "#999999"
+    )
+    
+    p <- plot_ly(data, 
+                 x = ~logFC_x, 
+                 y = ~logFC_y,
+                 type = 'scatter',
+                 mode = 'markers',
+                 color = ~sig_category,
+                 colors = color_mapping,
+                 marker = list(
+                   size = 6,
+                   opacity = 0.6,
+                   line = list(width = 0)
+                 ),
+                 text = ~paste0(
+                   "Gene: ", gene,
+                   "<br>", input$x_comparison, " logFC: ", round(logFC_x, 3),
+                   "<br>", input$y_comparison, " logFC: ", round(logFC_y, 3),
+                   "<br>P-value (x): ", format(P.Value_x, scientific = TRUE, digits = 3),
+                   "<br>P-value (y): ", format(P.Value_y, scientific = TRUE, digits = 3),
+                   "<br>Adj.P (x): ", format(adj.P.Val_x, scientific = TRUE, digits = 3),
+                   "<br>Adj.P (y): ", format(adj.P.Val_y, scientific = TRUE, digits = 3)
+                 ),
+                 hoverinfo = 'text'
+    ) %>%
+      layout(
+        title = "DEG Comparison",
+        xaxis = list(title = paste(input$x_comparison, "(logFC)")),
+        yaxis = list(title = paste(input$y_comparison, "(logFC)")),
+        hovermode = 'closest',
+        showlegend = TRUE,
+        legend = list(title = list(text = "Significance"))
+      ) %>%
+      add_segments(x = 0, xend = 0, y = min(data$logFC_y), yend = max(data$logFC_y),
+                   line = list(color = "black", dash = "dash", width = 1),
+                   showlegend = FALSE, inherit = FALSE) %>%
+      add_segments(x = min(data$logFC_x), xend = max(data$logFC_x), y = 0, yend = 0,
+                   line = list(color = "black", dash = "dash", width = 1),
+                   showlegend = FALSE, inherit = FALSE)
+    
+    p
+  })
+  
+  # Top genes table
+  output$top_genes_table <- renderDT({
+    req(input$x_comparison)
+    
+    # Get data from the x-axis comparison
+    top_genes <- deg_results[[input$x_comparison]] %>%
+      arrange(desc(abs(logFC))) %>%
+      head(10) %>%
+      mutate(
+        logFC = round(logFC, 3),
+        AveExpr = round(AveExpr, 3),
+        t = round(t, 3),
+        P.Value = format(P.Value, scientific = TRUE, digits = 3),
+        adj.P.Val = format(adj.P.Val, scientific = TRUE, digits = 3),
+        B = round(B, 3)
+      )
+    
+    datatable(
+      top_genes,
+      options = list(
+        pageLength = 10,
+        dom = 't',
+        ordering = FALSE
+      ),
+      rownames = FALSE,
+      caption = paste("Top 10 genes by absolute logFC in", input$x_comparison)
+    )
+  })
+  
+  # ============================================================================
+  # SPP1 CORRELATION TAB
+  # ============================================================================
+  
+  # SPP1 Correlation Analysis
+  spp1_cor_results <- eventReactive(input$run_spp1_cor, {
+    withProgress(message = 'Calculating correlations...', value = 0, {
+      tryCatch({
+        # Filter metadata
+        meta_sub <- metadata
+        
+        if (length(input$filter_cell_line_spp1) > 0) {
+          meta_sub <- meta_sub %>% filter(cell_line %in% input$filter_cell_line_spp1)
+        }
+        if (length(input$filter_spp1_profile_spp1) > 0) {
+          meta_sub <- meta_sub %>% filter(spp1_profile %in% input$filter_spp1_profile_spp1)
+        }
+        if (length(input$filter_cisplatine_spp1) > 0) {
+          meta_sub <- meta_sub %>% filter(cisplatine %in% input$filter_cisplatine_spp1)
+        }
+        if (length(input$filter_comment_spp1) > 0) {
+          meta_sub <- meta_sub %>% filter(comment %in% input$filter_comment_spp1)
+        }
+        if (length(input$filter_replicate_spp1) > 0) {
+          meta_sub <- meta_sub %>% filter(replicate %in% input$filter_replicate_spp1)
+        }
+        
+        if (nrow(meta_sub) == 0) {
+          showNotification("No samples match the specified filters", type = "error")
+          return(NULL)
+        }
+        
+        # Get expression data for selected samples
+        samples <- meta_sub$sample_id
+        expr_sub <- expr_data_getmm[, samples, drop = FALSE]
+        
+        # Check if SPP1 exists
+        if (!"SPP1" %in% rownames(expr_sub)) {
+          showNotification("SPP1 not found in expression data", type = "error")
+          return(NULL)
+        }
+        
+        # Get SPP1 expression
+        spp1_expr <- as.numeric(expr_sub["SPP1", ])
+        
+        # Calculate correlation for each gene with SPP1
+        cor_results <- data.frame(
+          gene = rownames(expr_sub),
+          correlation = NA,
+          pvalue = NA,
+          stringsAsFactors = FALSE
+        )
+        
+        for (i in 1:nrow(expr_sub)) {
+          gene_expr <- as.numeric(expr_sub[i, ])
+          
+          # Skip if no variance
+          if (sd(gene_expr, na.rm = TRUE) == 0 || sd(spp1_expr, na.rm = TRUE) == 0) {
+            next
+          }
+          
+          # Calculate Pearson correlation
+          cor_test <- cor.test(gene_expr, spp1_expr, method = "pearson")
+          cor_results$correlation[i] <- cor_test$estimate
+          cor_results$pvalue[i] <- cor_test$p.value
+        }
+        
+        # Remove NA values and SPP1 itself
+        cor_results <- cor_results %>%
+          filter(!is.na(correlation), !is.na(pvalue), gene != "SPP1") %>%
+          mutate(
+            neg_log10_pval = -log10(pvalue),
+            significance = case_when(
+              pvalue < input$pval_threshold_cor & correlation > input$cor_threshold ~ "Positive correlation",
+              pvalue < input$pval_threshold_cor & correlation < -input$cor_threshold ~ "Negative correlation",
+              pvalue < input$pval_threshold_cor ~ "Significant (weak correlation)",
+              TRUE ~ "Not significant"
+            )
+          )
+        
+        list(
+          data = cor_results,
+          n_samples = ncol(expr_sub)
+        )
+      }, error = function(e) {
+        showNotification(paste("Error:", e$message), type = "error")
+        NULL
+      })
+    })
+  })
+  
+  # Create volcano plot
+  output$spp1_volcano <- renderPlotly({
+    req(spp1_cor_results())
+    
+    cor_results <- spp1_cor_results()$data
+    
+    # Check if a gene is queried
+    query_gene <- input$query_gene_spp1
+    if (!is.null(query_gene) && query_gene != "") {
+      # Highlight the queried gene
+      cor_results <- cor_results %>%
+        mutate(highlight = ifelse(gene == query_gene, "Queried Gene", significance))
+    } else {
+      cor_results <- cor_results %>%
+        mutate(highlight = significance)
+    }
+    
+    # Define colors
+    color_mapping <- c(
+      "Queried Gene" = "#000000",
+      "Positive correlation" = "#e41a1c",
+      "Negative correlation" = "#377eb8",
+      "Significant (weak correlation)" = "#ff7f00",
+      "Not significant" = "#999999"
+    )
+    
+    # Define sizes
+    cor_results <- cor_results %>%
+      mutate(point_size = ifelse(highlight == "Queried Gene", 12, 5))
+    
+    p <- plot_ly(
+      cor_results,
+      x = ~correlation,
+      y = ~neg_log10_pval,
+      type = 'scatter',
+      mode = 'markers',
+      color = ~highlight,
+      colors = color_mapping,
+      marker = list(
+        size = ~point_size,
+        opacity = ~ifelse(highlight == "Queried Gene", 1, 0.6),
+        line = list(width = ~ifelse(highlight == "Queried Gene", 2, 0),
+                    color = "white")
+      ),
+      text = ~paste0(
+        "Gene: ", gene,
+        "<br>Correlation: ", round(correlation, 3),
+        "<br>P-value: ", format(pvalue, scientific = TRUE, digits = 3),
+        "<br>-log10(p): ", round(neg_log10_pval, 2)
+      ),
+      hoverinfo = 'text'
+    ) %>%
+      layout(
+        title = paste("Gene Correlation with SPP1 (", spp1_cor_results()$n_samples, " samples)"),
+        xaxis = list(
+          title = "Pearson Correlation with SPP1",
+          zeroline = TRUE,
+          zerolinewidth = 2,
+          zerolinecolor = 'black'
+        ),
+        yaxis = list(
+          title = "-log10(P-value)"
+        ),
+        hovermode = 'closest',
+        showlegend = TRUE,
+        legend = list(title = list(text = "Significance"))
+      ) %>%
+      # Add threshold lines
+      add_segments(
+        x = input$cor_threshold, xend = input$cor_threshold,
+        y = 0, yend = max(cor_results$neg_log10_pval),
+        line = list(color = "black", dash = "dash", width = 1),
+        showlegend = FALSE, inherit = FALSE
+      ) %>%
+      add_segments(
+        x = -input$cor_threshold, xend = -input$cor_threshold,
+        y = 0, yend = max(cor_results$neg_log10_pval),
+        line = list(color = "black", dash = "dash", width = 1),
+        showlegend = FALSE, inherit = FALSE
+      ) %>%
+      add_segments(
+        x = min(cor_results$correlation), xend = max(cor_results$correlation),
+        y = -log10(input$pval_threshold_cor), yend = -log10(input$pval_threshold_cor),
+        line = list(color = "black", dash = "dash", width = 1),
+        showlegend = FALSE, inherit = FALSE
+      )
+    
+    p
+  })
+  
+  # Top positively correlated genes table
+  output$top_positive_genes <- renderDT({
+    req(spp1_cor_results())
+    
+    top_pos <- spp1_cor_results()$data %>%
+      filter(significance == "Positive correlation") %>%
+      arrange(desc(correlation)) %>%
+      head(10) %>%
+      mutate(
+        correlation = round(correlation, 3),
+        pvalue = format(pvalue, scientific = TRUE, digits = 3),
+        neg_log10_pval = round(neg_log10_pval, 2)
+      ) %>%
+      select(gene, correlation, pvalue, neg_log10_pval)
+    
+    datatable(
+      top_pos,
+      options = list(
+        pageLength = 10,
+        dom = 't',
+        ordering = FALSE
+      ),
+      rownames = FALSE,
+      colnames = c("Gene", "Correlation", "P-value", "-log10(p)")
+    )
+  })
+  
+  # Top negatively correlated genes table
+  output$top_negative_genes <- renderDT({
+    req(spp1_cor_results())
+    
+    top_neg <- spp1_cor_results()$data %>%
+      filter(significance == "Negative correlation") %>%
+      arrange(correlation) %>%
+      head(10) %>%
+      mutate(
+        correlation = round(correlation, 3),
+        pvalue = format(pvalue, scientific = TRUE, digits = 3),
+        neg_log10_pval = round(neg_log10_pval, 2)
+      ) %>%
+      select(gene, correlation, pvalue, neg_log10_pval)
+    
+    datatable(
+      top_neg,
+      options = list(
+        pageLength = 10,
+        dom = 't',
+        ordering = FALSE
+      ),
+      rownames = FALSE,
+      colnames = c("Gene", "Correlation", "P-value", "-log10(p)")
+    )
+  })
+  
+  # Gene correlation details table
+  output$gene_correlation_details <- renderDT({
+    req(spp1_cor_results(), input$query_gene_spp1)
+    req(input$query_gene_spp1 != "")
+    
+    gene <- input$query_gene_spp1
+    gene_data <- spp1_cor_results()$data %>%
+      filter(gene == !!gene)
+    
+    if (nrow(gene_data) == 0) {
+      return(NULL)
+    }
+    
+    # Create a detailed summary
+    details <- data.frame(
+      Metric = c("Gene", "Correlation", "P-value", "-log10(p)", "Significance"),
+      Value = c(
+        gene_data$gene,
+        round(gene_data$correlation, 4),
+        format(gene_data$pvalue, scientific = TRUE, digits = 4),
+        round(gene_data$neg_log10_pval, 3),
+        gene_data$significance
+      )
+    )
+    
+    datatable(
+      details,
+      options = list(
+        dom = 't',
+        ordering = FALSE,
+        pageLength = 5
+      ),
+      rownames = FALSE
+    )
+  })
+  
+  # Gene vs SPP1 scatter plot
+  output$gene_spp1_scatter <- renderPlotly({
+    req(spp1_cor_results(), input$query_gene_spp1)
+    req(input$query_gene_spp1 != "")
+    
+    gene <- input$query_gene_spp1
+    
+    # Get the filtered metadata from correlation analysis
+    meta_sub <- metadata
+    
+    if (length(input$filter_cell_line_spp1) > 0) {
+      meta_sub <- meta_sub %>% filter(cell_line %in% input$filter_cell_line_spp1)
+    }
+    if (length(input$filter_spp1_profile_spp1) > 0) {
+      meta_sub <- meta_sub %>% filter(spp1_profile %in% input$filter_spp1_profile_spp1)
+    }
+    if (length(input$filter_cisplatine_spp1) > 0) {
+      meta_sub <- meta_sub %>% filter(cisplatine %in% input$filter_cisplatine_spp1)
+    }
+    if (length(input$filter_comment_spp1) > 0) {
+      meta_sub <- meta_sub %>% filter(comment %in% input$filter_comment_spp1)
+    }
+    if (length(input$filter_replicate_spp1) > 0) {
+      meta_sub <- meta_sub %>% filter(replicate %in% input$filter_replicate_spp1)
+    }
+    
+    samples <- meta_sub$sample_id
+    
+    # Get expression data
+    if (!gene %in% rownames(expr_data_getmm)) {
+      return(NULL)
+    }
+    
+    spp1_expr <- as.numeric(expr_data_getmm["SPP1", samples])
+    gene_expr <- as.numeric(expr_data_getmm[gene, samples])
+    
+    # Get correlation info
+    gene_cor <- spp1_cor_results()$data %>%
+      filter(gene == !!gene) %>%
+      pull(correlation)
+    
+    scatter_data <- data.frame(
+      spp1 = spp1_expr,
+      gene = gene_expr,
+      sample = samples
+    )
+    
+    plot_ly(scatter_data,
+            x = ~spp1,
+            y = ~gene,
+            type = 'scatter',
+            mode = 'markers',
+            marker = list(size = 8, opacity = 0.7),
+            text = ~paste("Sample:", sample),
+            hoverinfo = 'text'
+    ) %>%
+      add_lines(
+        x = ~spp1,
+        y = fitted(lm(gene ~ spp1, data = scatter_data)),
+        line = list(color = 'red', dash = 'dash'),
+        showlegend = FALSE,
+        hoverinfo = 'skip'
+      ) %>%
+      layout(
+        title = paste(gene, "vs SPP1 (r =", round(gene_cor, 3), ")"),
+        xaxis = list(title = "SPP1 Expression"),
+        yaxis = list(title = paste(gene, "Expression")),
+        hovermode = 'closest'
+      )
+  })
+  
+  # ============================================================================
+  # GENE EXPRESSION PROFILE TAB
+  # ============================================================================
+  
+  # Gene profile data
+  gene_profile_data <- eventReactive(input$run_gene_profile, {
+    req(input$selected_gene)
+    
+    withProgress(message = 'Generating profile...', value = 0, {
+      tryCatch({
+        # Filter metadata
+        meta_sub <- metadata
+        
+        if (length(input$filter_cell_line_profile) > 0) {
+          meta_sub <- meta_sub %>% filter(cell_line %in% input$filter_cell_line_profile)
+        }
+        if (length(input$filter_spp1_profile_profile) > 0) {
+          meta_sub <- meta_sub %>% filter(spp1_profile %in% input$filter_spp1_profile_profile)
+        }
+        if (length(input$filter_cisplatine_profile) > 0) {
+          meta_sub <- meta_sub %>% filter(cisplatine %in% input$filter_cisplatine_profile)
+        }
+        if (length(input$filter_comment_profile) > 0) {
+          meta_sub <- meta_sub %>% filter(comment %in% input$filter_comment_profile)
+        }
+        if (length(input$filter_replicate_profile) > 0) {
+          meta_sub <- meta_sub %>% filter(replicate %in% input$filter_replicate_profile)
+        }
+        
+        if (nrow(meta_sub) == 0) {
+          showNotification("No samples match the specified filters", type = "error")
+          return(NULL)
+        }
+        
+        # Check if gene exists
+        if (!input$selected_gene %in% rownames(expr_data_getmm)) {
+          showNotification("Gene not found in expression data", type = "error")
+          return(NULL)
+        }
+        
+        # Get expression data
+        samples <- meta_sub$sample_id
+        gene_expr <- as.numeric(expr_data_getmm[input$selected_gene, samples])
+        
+        # Prepare plot data
+        plot_data <- meta_sub %>%
+          mutate(expression = gene_expr)
+        
+        list(
+          data = plot_data,
+          gene = input$selected_gene
+        )
+      }, error = function(e) {
+        showNotification(paste("Error:", e$message), type = "error")
+        NULL
+      })
+    })
+  })
+  
+  # Create gene profile plot
+  output$gene_profile_plot <- renderPlotly({
+    req(gene_profile_data())
+    
+    plot_data <- gene_profile_data()$data
+    gene_name <- gene_profile_data()$gene
+    
+    # Determine color variable
+    color_var <- if(input$color_by_var == "same") input$group_by_var else input$color_by_var
+    
+    # Create plot
+    p <- plot_ly(plot_data, 
+                 x = as.formula(paste0("~", input$group_by_var)),
+                 y = ~expression,
+                 color = as.formula(paste0("~", color_var)),
+                 type = 'violin',
+                 box = list(visible = TRUE),
+                 meanline = list(visible = TRUE),
+                 text = ~paste0(
+                   "Sample: ", sample_id,
+                   "<br>Expression: ", round(expression, 3),
+                   "<br>Cell Line: ", cell_line,
+                   "<br>SPP1 Profile: ", spp1_profile,
+                   "<br>Cisplatine: ", cisplatine,
+                   "<br>Comment: ", comment,
+                   "<br>Replicate: ", replicate
+                 ),
+                 hoverinfo = 'text'
+    )
+    
+    # Add individual points if requested
+    if (input$show_points) {
+      p <- p %>%
+        add_trace(
+          type = 'box',
+          boxpoints = 'all',
+          jitter = 0.3,
+          pointpos = 0,
+          marker = list(size = 4, opacity = 0.6),
+          showlegend = FALSE
+        )
+    }
+    
+    p %>%
+      layout(
+        title = paste("Expression Profile:", gene_name),
+        xaxis = list(title = input$group_by_var),
+        yaxis = list(title = "Expression (log2 TPM)"),
+        hovermode = 'closest',
+        showlegend = TRUE
+      )
+  })
+  
+  # Summary statistics table
+  output$gene_profile_stats <- renderDT({
+    req(gene_profile_data())
+    
+    plot_data <- gene_profile_data()$data
+    
+    # Calculate summary stats by group
+    stats <- plot_data %>%
+      group_by(!!sym(input$group_by_var)) %>%
+      summarise(
+        n_samples = n(),
+        mean = mean(expression, na.rm = TRUE),
+        median = median(expression, na.rm = TRUE),
+        sd = sd(expression, na.rm = TRUE),
+        min = min(expression, na.rm = TRUE),
+        max = max(expression, na.rm = TRUE),
+        .groups = 'drop'
+      ) %>%
+      mutate(
+        mean = round(mean, 3),
+        median = round(median, 3),
+        sd = round(sd, 3),
+        min = round(min, 3),
+        max = round(max, 3)
+      )
+    
+    datatable(
+      stats,
+      options = list(
+        pageLength = 20,
+        dom = 't',
+        ordering = FALSE
+      ),
+      rownames = FALSE,
+      colnames = c("Group", "N", "Mean", "Median", "SD", "Min", "Max")
+    )
+  })
 }
 
 # ============================================================================
