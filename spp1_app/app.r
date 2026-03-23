@@ -8,6 +8,9 @@ library(circlize)
 library(grid)
 library(plotly)
 library(DT)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(enrichplot)
 
 # ============================================================================
 # BUNDLED DATA
@@ -103,7 +106,7 @@ visualize_genes_with_annotations <- function(
   )
   
   annotation_col <- meta_sub %>%
-    select(sample_id, cell_line, spp1_profile, cisplatine, comment, replicate) %>%
+    dplyr::select(sample_id, cell_line, spp1_profile, cisplatine, comment, replicate) %>%
     column_to_rownames("sample_id")
   
   # Sort samples if sort_by is specified (before creating annotations)
@@ -218,8 +221,11 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Gene Expression Heatmap", tabName = "heatmap", icon = icon("table")),
       menuItem("DEG Comparison", tabName = "deg_comparison", icon = icon("chart-line")),
+      menuItem("Volcano Plot", tabName = "volcano_plot", icon = icon("volcano")),
+      menuItem("GO Enrichment Analysis", tabName = "go_enrichment", icon = icon("sitemap")),
       menuItem("SPP1 Correlation", tabName = "spp1_correlation", icon = icon("project-diagram")),
-      menuItem("Gene Expression Profile", tabName = "gene_profile", icon = icon("chart-area"))
+      menuItem("Gene Expression Profile", tabName = "gene_profile", icon = icon("chart-area")),
+      menuItem("PCA Analysis", tabName = "pca_analysis", icon = icon("project-diagram"))
     )
   ),
   
@@ -338,6 +344,8 @@ ui <- dashboardPage(
                 helpText("Lower thresholds = more stringent filtering (e.g., 0.001 for very significant genes)")
               ),
               column(9,
+                downloadButton("download_deg_data", "Download DEG Comparison Data", 
+                              class = "btn-success", style = "margin-bottom: 10px;"),
                 plotlyOutput("deg_scatter", height = "600px"),
                 hr(),
                 h4("Top 10 Genes by Absolute logFC"),
@@ -348,7 +356,149 @@ ui <- dashboardPage(
         )
       ),
       
-      # Third tab - SPP1 Correlation Volcano Plot
+      # Volcano Plot tab
+      tabItem(tabName = "volcano_plot",
+        fluidRow(
+          box(
+            title = "Volcano Plot Visualization",
+            width = 12,
+            solidHeader = TRUE,
+            status = "primary",
+            
+            fluidRow(
+              column(3,
+                h4("Select Comparison"),
+                selectInput("volcano_comparison", "DEG Comparison:",
+                            choices = NULL),
+                hr(),
+                h4("Significance Thresholds"),
+                numericInput("volcano_pval_threshold", "-log10(adj.p) threshold:",
+                            min = 0, max = 10, value = 1.3, step = 0.1),
+                helpText("Default: 1.3 equals adj.p = 0.05"),
+                numericInput("volcano_fc_threshold", "|logFC| threshold:",
+                            min = 0, max = 10, value = 1, step = 0.1),
+                hr(),
+                h4("Labeling Options"),
+                numericInput("volcano_top_n", "Label top N genes:",
+                            min = 0, max = 50, value = 10, step = 1),
+                helpText("Labels most significant genes"),
+                hr(),
+                h4("Color Scheme"),
+                selectInput("volcano_colors", "Color by:",
+                            choices = c("Significance" = "sig",
+                                        "Expression change" = "fc"),
+                            selected = "sig")
+              ),
+              column(9,
+                downloadButton("download_volcano_data", "Download Volcano Data", 
+                              class = "btn-success", style = "margin-bottom: 10px;"),
+                plotlyOutput("volcano_plot", height = "600px"),
+                hr(),
+                h4("Significant Genes Summary"),
+                DTOutput("volcano_summary_table")
+              )
+            )
+          )
+        )
+      ),
+      
+      # Third tab - GO Enrichment Analysis
+      tabItem(tabName = "go_enrichment",
+        fluidRow(
+          box(
+            title = "Pathway Enrichment Parameters",
+            width = 3,
+            solidHeader = TRUE,
+            status = "primary",
+            
+            h4("Select Comparison"),
+            selectInput("go_comparison", "DEG Comparison:",
+                        choices = NULL),
+            hr(),
+            h4("Database Selection"),
+            radioButtons("pathway_database", "Enrichment Database:",
+                        choices = c("Gene Ontology (GO)" = "GO",
+                                    "KEGG Pathways" = "KEGG"),
+                        selected = "GO"),
+            helpText(HTML("<b>GO:</b> Gene Ontology terms (BP, MF, CC)<br><b>KEGG:</b> KEGG pathway database")),
+            hr(),
+            h4("Analysis Method"),
+            radioButtons("go_method", "Enrichment Method:",
+                        choices = c("Over-Representation Analysis (ORA)" = "ORA",
+                                    "Gene Set Enrichment Analysis (GSEA)" = "GSEA"),
+                        selected = "ORA"),
+            helpText(HTML("<b>ORA:</b> Tests if terms are over-represented in genes passing thresholds. 
+                          <br><b>GSEA:</b> Tests if term genes are enriched at top/bottom of ranked gene list. 
+                          Uses all genes, no cutoffs needed.")),
+            hr(),
+            conditionalPanel(
+              condition = "input.go_method == 'ORA'",
+              h4("Gene Selection Thresholds"),
+              numericInput("go_logfc_threshold", "Log Fold Change threshold (|logFC| > threshold):",
+                          min = 0, max = 10, value = 1, step = 0.1),
+              numericInput("go_adjp_threshold", "Adjusted P-value threshold (adj.p < threshold):",
+                          min = 0, max = 1, value = 0.05, step = 0.01),
+              helpText("Genes exceeding these thresholds will be used for enrichment"),
+              hr()
+            ),
+            conditionalPanel(
+              condition = "input.go_method == 'GSEA'",
+              h4("Gene Ranking"),
+              radioButtons("gsea_rank_by", "Rank genes by:",
+                          choices = c("Log Fold Change" = "logFC",
+                                      "t-statistic" = "t",
+                                      "-log10(p) × sign(logFC)" = "signed_pval"),
+                          selected = "logFC"),
+              helpText("Determines how genes are ranked for GSEA"),
+              hr()
+            ),
+            conditionalPanel(
+              condition = "input.pathway_database == 'GO'",
+              h4("GO Ontology"),
+              selectInput("go_ontology", "Ontology:",
+                          choices = c("Biological Process" = "BP",
+                                      "Molecular Function" = "MF",
+                                      "Cellular Component" = "CC"),
+                          selected = "BP")
+            ),
+            h4("Enrichment Options"),
+            numericInput("go_pval_cutoff", "P-value cutoff:",
+                        min = 0, max = 1, value = 0.05, step = 0.01),
+            numericInput("go_qval_cutoff", "Q-value cutoff:",
+                        min = 0, max = 1, value = 0.2, step = 0.05),
+            helpText("P-value and Q-value cutoffs for term significance"),
+            hr(),
+            actionButton("run_go_enrichment", "Run Enrichment", class = "btn-primary"),
+            hr(),
+            h4("Summary"),
+            textOutput("go_gene_count"),
+            textOutput("go_term_count")
+          ),
+          
+          box(
+            title = "Pathway Enrichment Results",
+            width = 9,
+            solidHeader = TRUE,
+            status = "info",
+            
+            tabsetPanel(
+              tabPanel("Bubble Plot",
+                plotlyOutput("go_bubble_plot", height = "600px")
+              ),
+              tabPanel("Summary Table",
+                DTOutput("go_summary_table")
+              ),
+              tabPanel("Full Results",
+                downloadButton("download_go_results", "Download Full Results", 
+                              class = "btn-success", style = "margin-bottom: 10px;"),
+                DTOutput("go_full_table")
+              )
+            )
+          )
+        )
+      ),
+      
+      # Fourth tab - SPP1 Correlation Volcano Plot
       tabItem(tabName = "spp1_correlation",
         fluidRow(
           box(
@@ -396,6 +546,8 @@ ui <- dashboardPage(
             width = 9,
             solidHeader = TRUE,
             status = "info",
+            downloadButton("download_spp1_cor", "Download Correlation Data", 
+                          class = "btn-success", style = "margin-bottom: 10px;"),
             plotlyOutput("spp1_volcano", height = "500px"),
             conditionalPanel(
               condition = "input.query_gene_spp1 != null && input.query_gene_spp1 != ''",
@@ -425,7 +577,7 @@ ui <- dashboardPage(
         )
       ),
       
-      # Fourth tab - Gene Expression Profile
+      # Fifth tab - Gene Expression Profile
       tabItem(tabName = "gene_profile",
         fluidRow(
           box(
@@ -480,10 +632,91 @@ ui <- dashboardPage(
             width = 9,
             solidHeader = TRUE,
             status = "info",
+            downloadButton("download_gene_profile", "Download Profile Data", 
+                          class = "btn-success", style = "margin-bottom: 10px;"),
             plotlyOutput("gene_profile_plot", height = "600px"),
             hr(),
             h4("Summary Statistics"),
             DTOutput("gene_profile_stats")
+          )
+        )
+      ),
+      
+      # PCA Analysis tab  
+      tabItem(tabName = "pca_analysis",
+        fluidRow(
+          box(
+            title = "PCA Parameters",
+            width = 3,
+            solidHeader = TRUE,
+            status = "primary",
+            
+            h4("Sample Filters:"),
+            checkboxGroupInput("filter_cell_line_pca", "Cell Line:",
+                               choices = NULL),
+            checkboxGroupInput("filter_spp1_profile_pca", "SPP1 Profile:",
+                               choices = NULL),
+            checkboxGroupInput("filter_cisplatine_pca", "Cisplatine:",
+                               choices = NULL),
+            checkboxGroupInput("filter_comment_pca", "Comment:",
+                               choices = NULL),
+            checkboxGroupInput("filter_replicate_pca", "Replicate:",
+                               choices = NULL),
+            hr(),
+            h4("PCA Options"),
+            selectInput("pca_color_by", "Color samples by:",
+                        choices = c("Cell Line" = "cell_line",
+                                    "SPP1 Profile" = "spp1_profile",
+                                    "Cisplatine" = "cisplatine",
+                                    "Comment" = "comment",
+                                    "Replicate" = "replicate"),
+                        selected = "spp1_profile"),
+            selectInput("pca_shape_by", "Shape samples by:",
+                        choices = c("None" = "none",
+                                    "Cell Line" = "cell_line",
+                                    "SPP1 Profile" = "spp1_profile",
+                                    "Cisplatine" = "cisplatine",
+                                    "Comment" = "comment",
+                                    "Replicate" = "replicate"),
+                        selected = "cell_line"),
+            numericInput("pca_top_genes", "Number of most variable genes:",
+                        min = 100, max = 10000, value = 500, step = 100),
+            helpText("Uses top N genes by variance for PCA"),
+            hr(),
+            checkboxInput("pca_scale", "Scale genes", value = TRUE),
+            actionButton("run_pca", "Run PCA", class = "btn-primary")
+          ),
+          
+          box(
+            title = "PCA Visualization",
+            width = 9,
+            solidHeader = TRUE,
+            status = "info",
+            
+            tabsetPanel(
+              tabPanel("PCA Plot",
+                downloadButton("download_pca_plot", "Download PCA Data", 
+                              class = "btn-success", style = "margin: 10px;"),
+                plotlyOutput("pca_plot", height = "600px")
+              ),
+              tabPanel("Scree Plot",
+                plotlyOutput("scree_plot", height = "500px"),
+                hr(),
+                h4("Variance Explained"),
+                DTOutput("variance_table")
+              ),
+              tabPanel("Loadings",
+                h4("Top Gene Loadings for Selected PC"),
+                fluidRow(
+                  column(3,
+                    selectInput("pc_for_loadings", "Select PC:",
+                                choices = c("PC1" = 1, "PC2" = 2, "PC3" = 3, "PC4" = 4, "PC5" = 5),
+                                selected = 1)
+                  )
+                ),
+                DTOutput("loadings_table")
+              )
+            )
           )
         )
       )
@@ -496,6 +729,39 @@ ui <- dashboardPage(
 # ============================================================================
 
 server <- function(input, output, session) {
+  
+  # ============================================================================
+  # CACHE FOR PERFORMANCE OPTIMIZATION
+  # ============================================================================
+  
+  # Cache for gene ID conversions to speed up repeated GO analyses
+  gene_id_cache <- reactiveValues(
+    symbol_to_entrez = NULL
+  )
+  
+  # Pre-build gene ID mapping on first use (lazy loading)
+  observe({
+    # This will be triggered when data is available
+    req(exists("expr_data_getmm"))
+    
+    # Only build once
+    if (is.null(gene_id_cache$symbol_to_entrez)) {
+      # Build mapping for all genes in the dataset to speed up future lookups
+      all_genes <- rownames(expr_data_getmm)
+      
+      tryCatch({
+        gene_id_cache$symbol_to_entrez <- bitr(
+          all_genes,
+          fromType = "SYMBOL",
+          toType = "ENTREZID",
+          OrgDb = org.Hs.eg.db
+        )
+      }, error = function(e) {
+        # If it fails, set to empty data frame to avoid repeated attempts
+        gene_id_cache$symbol_to_entrez <- data.frame(SYMBOL = character(), ENTREZID = character())
+      })
+    }
+  })
   
   # Initialize choices based on metadata
   observe({
@@ -629,10 +895,10 @@ server <- function(input, output, session) {
     req(input$x_comparison, input$y_comparison)
     
     x_data <- deg_results[[input$x_comparison]] %>%
-      select(gene, logFC_x = logFC, P.Value_x = P.Value, adj.P.Val_x = adj.P.Val)
+      dplyr::select(gene, logFC_x = logFC, P.Value_x = P.Value, adj.P.Val_x = adj.P.Val)
     
     y_data <- deg_results[[input$y_comparison]] %>%
-      select(gene, logFC_y = logFC, P.Value_y = P.Value, adj.P.Val_y = adj.P.Val)
+      dplyr::select(gene, logFC_y = logFC, P.Value_y = P.Value, adj.P.Val_y = adj.P.Val)
     
     # Merge the two datasets
     merged <- inner_join(x_data, y_data, by = "gene") %>%
@@ -743,6 +1009,640 @@ server <- function(input, output, session) {
       caption = paste("Top 10 genes by absolute logFC in", input$x_comparison)
     )
   })
+  
+  # Download handler for DEG comparison data
+  output$download_deg_data <- downloadHandler(
+    filename = function() {
+      paste0("DEG_comparison_", input$x_comparison, "_vs_", input$y_comparison, "_", 
+             Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      req(scatter_data())
+      write.csv(scatter_data(), file, row.names = FALSE)
+    }
+  )
+  
+  # ============================================================================
+  # VOLCANO PLOT TAB
+  # ============================================================================
+  
+  # Initialize comparison choices for volcano plot
+  observe({
+    req(exists("deg_results"))
+    
+    comparison_names <- names(deg_results)
+    updateSelectInput(session, "volcano_comparison", 
+                      choices = comparison_names,
+                      selected = comparison_names[1])
+  })
+  
+  # Prepare volcano plot data
+  volcano_data <- reactive({
+    req(input$volcano_comparison)
+    
+    deg_data <- deg_results[[input$volcano_comparison]]
+    
+    # Calculate -log10(adj.P.Val) and classify genes
+    volcano_df <- deg_data %>%
+      mutate(
+        neg_log10_pval = -log10(adj.P.Val),
+        abs_logFC = abs(logFC),
+        # Classify genes by significance
+        significance = case_when(
+          abs(logFC) >= input$volcano_fc_threshold & neg_log10_pval >= input$volcano_pval_threshold ~ "Significant",
+          abs(logFC) >= input$volcano_fc_threshold ~ "FC only",
+          neg_log10_pval >= input$volcano_pval_threshold ~ "P-val only",
+          TRUE ~ "Not significant"
+        ),
+        # Direction for coloring
+        direction = case_when(
+          logFC > input$volcano_fc_threshold & neg_log10_pval >= input$volcano_pval_threshold ~ "Up-regulated",
+          logFC < -input$volcano_fc_threshold & neg_log10_pval >= input$volcano_pval_threshold ~ "Down-regulated",
+          TRUE ~ "Not significant"
+        )
+      )
+    
+    volcano_df
+  })
+  
+  # Render volcano plot
+  output$volcano_plot <- renderPlotly({
+    req(volcano_data())
+    
+    df <- volcano_data()
+    
+    # Select color scheme
+    if (input$volcano_colors == "sig") {
+      color_col <- "significance"
+      colors <- c("Significant" = "#E74C3C", "FC only" = "#F39C12", 
+                  "P-val only" = "#3498DB", "Not significant" = "grey70")
+    } else {
+      color_col <- "direction"
+      colors <- c("Up-regulated" = "#E74C3C", "Down-regulated" = "#3498DB", 
+                  "Not significant" = "grey70")
+    }
+    
+    # Get top N genes to label
+    top_genes <- df %>%
+      filter(significance == "Significant") %>%
+      arrange(desc(abs_logFC * neg_log10_pval)) %>%
+      head(input$volcano_top_n)
+    
+    p <- plot_ly(df, x = ~logFC, y = ~neg_log10_pval, 
+                 type = 'scatter', mode = 'markers',
+                 color = ~get(color_col), colors = colors,
+                 marker = list(size = 6, opacity = 0.6),
+                 text = ~paste("Gene:", gene,
+                              "<br>logFC:", round(logFC, 2),
+                              "<br>-log10(adj.p):", round(neg_log10_pval, 2),
+                              "<br>adj.P.Val:", format(adj.P.Val, digits = 3)),
+                 hoverinfo = 'text') %>%
+      add_trace(data = top_genes, 
+                mode = 'text',
+                text = ~gene,
+                textposition = "top center",
+                textfont = list(size = 10, color = "black"),
+                showlegend = FALSE,
+                hoverinfo = 'skip') %>%
+      layout(
+        title = paste("Volcano Plot:", input$volcano_comparison),
+        xaxis = list(title = "Log2 Fold Change", zeroline = TRUE),
+        yaxis = list(title = "-log10(Adjusted P-value)"),
+        hovermode = 'closest',
+        shapes = list(
+          # Vertical lines for FC threshold
+          list(type = "line", x0 = input$volcano_fc_threshold, x1 = input$volcano_fc_threshold,
+               y0 = 0, y1 = 1, yref = "paper",
+               line = list(color = "grey", dash = "dash", width = 1)),
+          list(type = "line", x0 = -input$volcano_fc_threshold, x1 = -input$volcano_fc_threshold,
+               y0 = 0, y1 = 1, yref = "paper",
+               line = list(color = "grey", dash = "dash", width = 1)),
+          # Horizontal line for p-value threshold
+          list(type = "line", x0 = 0, x1 = 1, xref = "paper",
+               y0 = input$volcano_pval_threshold, y1 = input$volcano_pval_threshold,
+               line = list(color = "grey", dash = "dash", width = 1))
+        )
+      )
+    
+    p
+  })
+  
+  # Summary table for volcano plot
+  output$volcano_summary_table <- renderDT({
+    req(volcano_data())
+    
+    df <- volcano_data()
+    
+    summary_stats <- df %>%
+      summarise(
+        `Total genes` = n(),
+        `Significant (both)` = sum(significance == "Significant"),
+        `Up-regulated` = sum(direction == "Up-regulated"),
+        `Down-regulated` = sum(direction == "Down-regulated"),
+        `FC only` = sum(significance == "FC only"),
+        `P-value only` = sum(significance == "P-val only")
+      ) %>%
+      tidyr::pivot_longer(everything(), names_to = "Category", values_to = "Count")
+    
+    datatable(summary_stats, 
+              options = list(dom = 't', ordering = FALSE),
+              rownames = FALSE)
+  })
+  
+  # Download handler for volcano data
+  output$download_volcano_data <- downloadHandler(
+    filename = function() {
+      paste0("volcano_plot_", input$volcano_comparison, "_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      req(volcano_data())
+      write.csv(volcano_data(), file, row.names = FALSE)
+    }
+  )
+  
+  # ============================================================================
+  # GO ENRICHMENT ANALYSIS TAB
+  # ============================================================================
+  
+  # Initialize comparison choices for GO analysis
+  observe({
+    req(exists("deg_results"))
+    
+    comparison_names <- names(deg_results)
+    updateSelectInput(session, "go_comparison", 
+                      choices = comparison_names,
+                      selected = comparison_names[1])
+  })
+  
+  # Perform GO/KEGG enrichment when button is clicked
+  go_enrichment_results <- eventReactive(input$run_go_enrichment, {
+    withProgress(message = 'Running pathway enrichment...', value = 0, {
+      tryCatch({
+        req(input$go_comparison, input$go_method, input$pathway_database)
+        
+        # Get DEG data for the selected comparison
+        deg_data <- deg_results[[input$go_comparison]]
+        
+        if (input$go_method == "ORA") {
+          # ============ Over-Representation Analysis ============
+          incProgress(0.1, detail = "Filtering genes...")
+          
+          # Filter genes based on thresholds
+          selected_genes <- deg_data %>%
+            filter(
+              abs(logFC) > input$go_logfc_threshold,
+              adj.P.Val < input$go_adjp_threshold
+            )
+          
+          if (nrow(selected_genes) == 0) {
+            return(list(
+              error = TRUE,
+              message = "No genes meet the specified thresholds. Please adjust the thresholds.",
+              method = "ORA",
+              database = input$pathway_database
+            ))
+          }
+          
+          # Get gene symbols
+          gene_list <- selected_genes$gene
+          
+          incProgress(0.2, detail = "Converting gene IDs...")
+          
+          # Use cached gene ID mapping for faster conversion
+          if (!is.null(gene_id_cache$symbol_to_entrez) && nrow(gene_id_cache$symbol_to_entrez) > 0) {
+            # Use pre-built cache
+            gene_entrez <- gene_id_cache$symbol_to_entrez %>%
+              filter(SYMBOL %in% gene_list)
+          } else {
+            # Fallback: convert on-the-fly if cache not available
+            gene_entrez <- bitr(gene_list, 
+                               fromType = "SYMBOL",
+                               toType = "ENTREZID",
+                               OrgDb = org.Hs.eg.db)
+          }
+          
+          if (nrow(gene_entrez) == 0) {
+            return(list(
+              error = TRUE,
+              message = "No genes could be mapped to Entrez IDs. Check gene symbols.",
+              method = "ORA",
+              database = input$pathway_database
+            ))
+          }
+          
+          incProgress(0.4, detail = "Running ORA enrichment...")
+          
+          # Perform enrichment based on database selection
+          if (input$pathway_database == "GO") {
+            # GO enrichment
+            enrich_result <- enrichGO(gene = gene_entrez$ENTREZID,
+                           OrgDb = org.Hs.eg.db,
+                           ont = input$go_ontology,
+                           pAdjustMethod = "BH",
+                           pvalueCutoff = input$go_pval_cutoff,
+                           qvalueCutoff = input$go_qval_cutoff,
+                           readable = TRUE,
+                           pool = FALSE)
+          } else {
+            # KEGG pathway enrichment
+            enrich_result <- enrichKEGG(gene = gene_entrez$ENTREZID,
+                           organism = "hsa",  # Homo sapiens
+                           pAdjustMethod = "BH",
+                           pvalueCutoff = input$go_pval_cutoff,
+                           qvalueCutoff = input$go_qval_cutoff)
+          }
+          
+          incProgress(0.3, detail = "Processing results...")
+          
+          if (is.null(enrich_result) || nrow(enrich_result@result) == 0) {
+            return(list(
+              error = TRUE,
+              message = paste("No significant", input$pathway_database, "terms found. Try relaxing the cutoff values."),
+              method = "ORA",
+              database = input$pathway_database
+            ))
+          }
+          
+          # Return results
+          list(
+            error = FALSE,
+            results = enrich_result,
+            method = "ORA",
+            database = input$pathway_database,
+            n_genes = length(gene_list),
+            n_mapped = nrow(gene_entrez),
+            n_terms = nrow(enrich_result@result)
+          )
+          
+        } else {
+          # ============ Gene Set Enrichment Analysis (GSEA) ============
+          incProgress(0.1, detail = "Preparing gene list...")
+          
+          # Create ranked gene list based on selected metric
+          if (input$gsea_rank_by == "logFC") {
+            ranked_values <- deg_data$logFC
+          } else if (input$gsea_rank_by == "t") {
+            ranked_values <- deg_data$t
+          } else {  # signed_pval
+            ranked_values <- -log10(deg_data$P.Value) * sign(deg_data$logFC)
+          }
+          
+          # Create named vector and remove any NAs or Inf values
+          gene_list_ranked <- setNames(ranked_values, deg_data$gene)
+          gene_list_ranked <- gene_list_ranked[!is.na(gene_list_ranked) & 
+                                                !is.infinite(gene_list_ranked)]
+          
+          # Sort in decreasing order
+          gene_list_ranked <- sort(gene_list_ranked, decreasing = TRUE)
+          
+          incProgress(0.2, detail = "Converting gene IDs...")
+          
+          # Convert gene symbols to Entrez IDs
+          if (!is.null(gene_id_cache$symbol_to_entrez) && nrow(gene_id_cache$symbol_to_entrez) > 0) {
+            # Use pre-built cache
+            gene_mapping <- gene_id_cache$symbol_to_entrez
+          } else {
+            # Fallback: convert on-the-fly
+            gene_mapping <- bitr(names(gene_list_ranked), 
+                                fromType = "SYMBOL",
+                                toType = "ENTREZID",
+                                OrgDb = org.Hs.eg.db)
+          }
+          
+          if (nrow(gene_mapping) == 0) {
+            return(list(
+              error = TRUE,
+              message = "No genes could be mapped to Entrez IDs. Check gene symbols.",
+              method = "GSEA",
+              database = input$pathway_database
+            ))
+          }
+          
+          # Create mapping preserving order
+          # Match genes to get their ranking values
+          gene_df <- data.frame(
+            SYMBOL = names(gene_list_ranked),
+            rank_value = as.numeric(gene_list_ranked),
+            stringsAsFactors = FALSE
+          )
+          
+          # Merge with Entrez IDs
+          gene_df <- merge(gene_df, gene_mapping, by = "SYMBOL", all.x = FALSE)
+          
+          # Remove duplicates (keep first/highest ranked)
+          gene_df <- gene_df[!duplicated(gene_df$ENTREZID), ]
+          
+          # Sort by rank_value in decreasing order
+          gene_df <- gene_df[order(gene_df$rank_value, decreasing = TRUE), ]
+          
+          # Create final gene list
+          gene_list_entrez <- setNames(gene_df$rank_value, gene_df$ENTREZID)
+          
+          # Final check: ensure it's properly sorted and has no issues
+          if (!all(diff(gene_list_entrez) <= 0)) {
+            # Re-sort if somehow not sorted
+            gene_list_entrez <- sort(gene_list_entrez, decreasing = TRUE)
+          }
+          
+          incProgress(0.4, detail = "Running GSEA...")
+          
+          # Perform GSEA based on database selection
+          if (input$pathway_database == "GO") {
+            # GO GSEA
+            gsea_result <- gseGO(
+              geneList = gene_list_entrez,
+              OrgDb = org.Hs.eg.db,
+              ont = input$go_ontology,
+              pvalueCutoff = input$go_pval_cutoff,
+              pAdjustMethod = "BH",
+              nPermSimple = 1000,
+              verbose = FALSE
+            )
+          } else {
+            # KEGG GSEA
+            gsea_result <- gseKEGG(
+              geneList = gene_list_entrez,
+              organism = "hsa",
+              pvalueCutoff = input$go_pval_cutoff,
+              pAdjustMethod = "BH",
+              nPermSimple = 1000,
+              verbose = FALSE
+            )
+          }
+          
+          incProgress(0.3, detail = "Processing results...")
+          
+          if (is.null(gsea_result) || nrow(gsea_result@result) == 0) {
+            return(list(
+              error = TRUE,
+              message = paste("No significant", input$pathway_database, "terms found. Try relaxing the p-value cutoff."),
+              method = "GSEA",
+              database = input$pathway_database
+            ))
+          }
+          
+          # Return results
+          list(
+            error = FALSE,
+            results = gsea_result,
+            method = "GSEA",
+            database = input$pathway_database,
+            n_genes = length(gene_list_ranked),
+            n_mapped = length(gene_list_entrez),
+            n_terms = nrow(gsea_result@result)
+          )
+        }
+        
+      }, error = function(e) {
+        return(list(
+          error = TRUE,
+          message = paste("Error:", e$message),
+          method = input$go_method,
+          database = input$pathway_database
+        ))
+      })
+    })
+  })
+  
+  # Display gene count summary
+  output$go_gene_count <- renderText({
+    req(go_enrichment_results())
+    results <- go_enrichment_results()
+    
+    if (results$error) {
+      return("")
+    }
+    
+    if (results$method == "ORA") {
+      paste0("Genes selected: ", results$n_genes, " (", results$n_mapped, " mapped to Entrez ID)")
+    } else {
+      paste0("Total genes ranked: ", results$n_genes, " (", results$n_mapped, " mapped to Entrez ID)")
+    }
+  })
+  
+  # Display term count summary
+  output$go_term_count <- renderText({
+    req(go_enrichment_results())
+    results <- go_enrichment_results()
+    
+    if (results$error) {
+      return("")
+    }
+    
+    term_type <- if (results$database == "GO") "GO terms" else "KEGG pathways"
+    paste0("Significant ", term_type, ": ", results$n_terms)
+  })
+  
+  # Create bubble plot
+  output$go_bubble_plot <- renderPlotly({
+    req(go_enrichment_results())
+    results <- go_enrichment_results()
+    
+    if (results$error) {
+      # Show error message
+      plot_ly() %>%
+        layout(
+          title = list(text = results$message, x = 0.5, xanchor = "center"),
+          xaxis = list(visible = FALSE),
+          yaxis = list(visible = FALSE)
+        )
+    } else if (results$method == "ORA") {
+      # ============ ORA Bubble Plot ============
+      go_data <- results$results@result %>%
+        head(20) %>%  # Show top 20 terms
+        mutate(
+          GeneRatio_num = sapply(strsplit(GeneRatio, "/"), function(x) as.numeric(x[1])/as.numeric(x[2])),
+          log_pval = -log10(p.adjust),
+          Description = forcats::fct_reorder(Description, GeneRatio_num)
+        )
+      
+      plot_ly(go_data,
+              x = ~GeneRatio_num,
+              y = ~Description,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(
+                size = ~Count,
+                sizemode = 'diameter',
+                sizeref = max(go_data$Count) / 50,
+                color = ~log_pval,
+                colorscale = 'Viridis',
+                colorbar = list(title = "-log10(adj.p)"),
+                line = list(width = 1, color = 'rgba(0,0,0,0.3)')
+              ),
+              text = ~paste0(
+                "GO Term: ", Description,
+                "<br>Gene Ratio: ", GeneRatio,
+                "<br>Count: ", Count,
+                "<br>P-value: ", format(pvalue, scientific = TRUE, digits = 3),
+                "<br>Adj. P-value: ", format(p.adjust, scientific = TRUE, digits = 3)
+              ),
+              hoverinfo = 'text'
+      ) %>%
+        layout(
+          title = paste("GO Over-Representation -", input$go_ontology),
+          xaxis = list(title = "Gene Ratio"),
+          yaxis = list(title = ""),
+          margin = list(l = 300),
+          showlegend = FALSE
+        )
+    } else {
+      # ============ GSEA Bubble Plot ============
+      gsea_data <- results$results@result %>%
+        head(20) %>%  # Show top 20 terms
+        mutate(
+          log_pval = -log10(p.adjust),
+          Description = forcats::fct_reorder(Description, NES)
+        )
+      
+      plot_ly(gsea_data,
+              x = ~NES,
+              y = ~Description,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(
+                size = ~setSize,
+                sizemode = 'diameter',
+                sizeref = max(gsea_data$setSize) / 50,
+                color = ~log_pval,
+                colorscale = 'Viridis',
+                colorbar = list(title = "-log10(adj.p)"),
+                line = list(width = 1, color = 'rgba(0,0,0,0.3)')
+              ),
+              text = ~paste0(
+                "GO Term: ", Description,
+                "<br>NES: ", round(NES, 3),
+                "<br>Set Size: ", setSize,
+                "<br>Enrichment Score: ", round(enrichmentScore, 3),
+                "<br>P-value: ", format(pvalue, scientific = TRUE, digits = 3),
+                "<br>Adj. P-value: ", format(p.adjust, scientific = TRUE, digits = 3)
+              ),
+              hoverinfo = 'text'
+      ) %>%
+        layout(
+          title = paste("GSEA Results -", input$go_ontology),
+          xaxis = list(title = "Normalized Enrichment Score (NES)", zeroline = TRUE),
+          yaxis = list(title = ""),
+          margin = list(l = 300),
+          showlegend = FALSE
+        ) %>%
+        add_segments(x = 0, xend = 0, 
+                    y = 0, yend = nrow(gsea_data) + 1,
+                    line = list(color = "red", dash = "dash", width = 1),
+                    showlegend = FALSE, inherit = FALSE)
+    }
+  })
+  
+  # Create summary table
+  output$go_summary_table <- renderDT({
+    req(go_enrichment_results())
+    results <- go_enrichment_results()
+    
+    if (results$error) {
+      # Return empty table with error message
+      datatable(data.frame(Message = results$message),
+                options = list(dom = 't'),
+                rownames = FALSE)
+    } else if (results$method == "ORA") {
+      # ORA summary table
+      summary_data <- results$results@result %>%
+        head(20) %>%
+        dplyr::select(ID, Description, GeneRatio, BgRatio, pvalue, p.adjust, Count) %>%
+        mutate(
+          pvalue = format(pvalue, scientific = TRUE, digits = 3),
+          p.adjust = format(p.adjust, scientific = TRUE, digits = 3)
+        )
+      
+      datatable(
+        summary_data,
+        options = list(
+          pageLength = 20,
+          scrollX = TRUE,
+          ordering = TRUE
+        ),
+        rownames = FALSE,
+        caption = "Top 20 GO terms (ORA)"
+      )
+    } else {
+      # GSEA summary table
+      summary_data <- results$results@result %>%
+        head(20) %>%
+        dplyr::select(ID, Description, setSize, enrichmentScore, NES, pvalue, p.adjust) %>%
+        mutate(
+          enrichmentScore = round(enrichmentScore, 3),
+          NES = round(NES, 3),
+          pvalue = format(pvalue, scientific = TRUE, digits = 3),
+          p.adjust = format(p.adjust, scientific = TRUE, digits = 3)
+        )
+      
+      datatable(
+        summary_data,
+        options = list(
+          pageLength = 20,
+          scrollX = TRUE,
+          ordering = TRUE
+        ),
+        rownames = FALSE,
+        colnames = c("ID", "Description", "Set Size", "ES", "NES", "P-value", "Adj. P-value"),
+        caption = "Top 20 GO terms (GSEA)"
+      )
+    }
+  })
+  
+  # Create full results table
+  output$go_full_table <- renderDT({
+    req(go_enrichment_results())
+    results <- go_enrichment_results()
+    
+    if (results$error) {
+      # Return empty table with error message
+      datatable(data.frame(Message = results$message),
+                options = list(dom = 't'),
+                rownames = FALSE)
+    } else {
+      # Show all results
+      full_data <- results$results@result %>%
+        mutate(
+          pvalue = format(pvalue, scientific = TRUE, digits = 3),
+          p.adjust = format(p.adjust, scientific = TRUE, digits = 3)
+        )
+      
+      # Format qvalue for ORA (GSEA doesn't always have qvalue)
+      if ("qvalue" %in% colnames(full_data)) {
+        full_data <- full_data %>%
+          mutate(qvalue = format(qvalue, scientific = TRUE, digits = 3))
+      }
+      
+      datatable(
+        full_data,
+        options = list(
+          pageLength = 25,
+          scrollX = TRUE,
+          ordering = TRUE
+        ),
+        rownames = FALSE,
+        caption = paste("Full", results$method, "Results")
+      )
+    }
+  })
+  
+  # Download handler for GO results
+  output$download_go_results <- downloadHandler(
+    filename = function() {
+      req(go_enrichment_results())
+      results <- go_enrichment_results()
+      paste0("GO_", results$method, "_", input$go_comparison, "_", 
+             input$go_ontology, "_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      req(go_enrichment_results())
+      results <- go_enrichment_results()
+      
+      if (!results$error) {
+        write.csv(results$results@result, file, row.names = FALSE)
+      }
+    }
+  )
   
   # ============================================================================
   # SPP1 CORRELATION TAB
@@ -938,7 +1838,7 @@ server <- function(input, output, session) {
         pvalue = format(pvalue, scientific = TRUE, digits = 3),
         neg_log10_pval = round(neg_log10_pval, 2)
       ) %>%
-      select(gene, correlation, pvalue, neg_log10_pval)
+      dplyr::select(gene, correlation, pvalue, neg_log10_pval)
     
     datatable(
       top_pos,
@@ -965,7 +1865,7 @@ server <- function(input, output, session) {
         pvalue = format(pvalue, scientific = TRUE, digits = 3),
         neg_log10_pval = round(neg_log10_pval, 2)
       ) %>%
-      select(gene, correlation, pvalue, neg_log10_pval)
+      dplyr::select(gene, correlation, pvalue, neg_log10_pval)
     
     datatable(
       top_neg,
@@ -978,6 +1878,26 @@ server <- function(input, output, session) {
       colnames = c("Gene", "Correlation", "P-value", "-log10(p)")
     )
   })
+  
+  # Download handler for SPP1 correlation data
+  output$download_spp1_cor <- downloadHandler(
+    filename = function() {
+      paste0("SPP1_correlation_results_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      req(spp1_cor_results())
+      
+      # Get full correlation data
+      cor_data <- spp1_cor_results()$data %>%
+        mutate(
+          correlation = round(correlation, 4),
+          pvalue = format(pvalue, scientific = TRUE, digits = 4),
+          neg_log10_pval = round(neg_log10_pval, 3)
+        )
+      
+      write.csv(cor_data, file, row.names = FALSE)
+    }
+  )
   
   # Gene correlation details table
   output$gene_correlation_details <- renderDT({
@@ -1235,6 +2155,276 @@ server <- function(input, output, session) {
       colnames = c("Group", "N", "Mean", "Median", "SD", "Min", "Max")
     )
   })
+  
+  # Download handler for gene profile data
+  output$download_gene_profile <- downloadHandler(
+    filename = function() {
+      req(input$selected_gene)
+      paste0("Gene_profile_", input$selected_gene, "_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      req(gene_profile_data())
+      
+      # Get the full profile data with all sample information
+      profile_data <- gene_profile_data()$data
+      
+      write.csv(profile_data, file, row.names = FALSE)
+    }
+  )
+  
+  # ============================================================================
+  # PCA ANALYSIS TAB
+  # ============================================================================
+  
+  # Initialize filter choices for PCA
+  observe({
+    req(exists("metadata"))
+    
+    updateCheckboxGroupInput(session, "filter_cell_line_pca",
+                             choices = unique(metadata$cell_line),
+                             selected = unique(metadata$cell_line))
+    updateCheckboxGroupInput(session, "filter_spp1_profile_pca",
+                             choices = unique(metadata$spp1_profile),
+                             selected = unique(metadata$spp1_profile))
+    updateCheckboxGroupInput(session, "filter_cisplatine_pca",
+                             choices = unique(metadata$cisplatine),
+                             selected = unique(metadata$cisplatine))
+    updateCheckboxGroupInput(session, "filter_comment_pca",
+                             choices = unique(metadata$comment),
+                             selected = unique(metadata$comment))
+    updateCheckboxGroupInput(session, "filter_replicate_pca",
+                             choices = as.character(unique(metadata$replicate)),
+                             selected = as.character(unique(metadata$replicate)))
+  })
+  
+  # Perform PCA
+  pca_results <- eventReactive(input$run_pca, {
+    withProgress(message = 'Running PCA...', value = 0, {
+      tryCatch({
+        incProgress(0.1, detail = "Filtering samples...")
+        
+        # Filter metadata
+        meta_sub <- metadata
+        
+        if (!is.null(input$filter_cell_line_pca) && length(input$filter_cell_line_pca) > 0) {
+          meta_sub <- meta_sub %>% filter(cell_line %in% input$filter_cell_line_pca)
+        }
+        if (!is.null(input$filter_spp1_profile_pca) && length(input$filter_spp1_profile_pca) > 0) {
+          meta_sub <- meta_sub %>% filter(spp1_profile %in% input$filter_spp1_profile_pca)
+        }
+        if (!is.null(input$filter_cisplatine_pca) && length(input$filter_cisplatine_pca) > 0) {
+          meta_sub <- meta_sub %>% filter(cisplatine %in% input$filter_cisplatine_pca)
+        }
+        if (!is.null(input$filter_comment_pca) && length(input$filter_comment_pca) > 0) {
+          meta_sub <- meta_sub %>% filter(comment %in% input$filter_comment_pca)
+        }
+        if (!is.null(input$filter_replicate_pca) && length(input$filter_replicate_pca) > 0) {
+          meta_sub <- meta_sub %>% filter(as.character(replicate) %in% input$filter_replicate_pca)
+        }
+        
+        if (nrow(meta_sub) < 3) {
+          return(list(error = TRUE, message = "Need at least 3 samples for PCA"))
+        }
+        
+        incProgress(0.2, detail = "Selecting genes...")
+        
+        # Get expression data for selected samples
+        expr_sub <- expr_data_getmm[, meta_sub$sample_id, drop = FALSE]
+        
+        # Select most variable genes
+        gene_vars <- apply(expr_sub, 1, var, na.rm = TRUE)
+        top_genes <- names(sort(gene_vars, decreasing = TRUE)[1:min(input$pca_top_genes, nrow(expr_sub))])
+        expr_pca <- expr_sub[top_genes, ]
+        
+        # Remove genes with any NA or zero variance
+        expr_pca <- expr_pca[complete.cases(expr_pca), ]
+        gene_vars_filtered <- apply(expr_pca, 1, var)
+        expr_pca <- expr_pca[gene_vars_filtered > 0, ]
+        
+        if (nrow(expr_pca) < 10) {
+          return(list(error = TRUE, message = "Not enough variable genes for PCA"))
+        }
+        
+        incProgress(0.3, detail = "Running PCA...")
+        
+        # Transpose for PCA (samples as rows, genes as columns)
+        expr_t <- t(expr_pca)
+        
+        # Scale if requested
+        if (input$pca_scale) {
+          pca_result <- prcomp(expr_t, center = TRUE, scale. = TRUE)
+        } else {
+          pca_result <- prcomp(expr_t, center = TRUE, scale. = FALSE)
+        }
+        
+        incProgress(0.3, detail = "Processing results...")
+        
+        # Calculate variance explained
+        var_explained <- (pca_result$sdev^2 / sum(pca_result$sdev^2)) * 100
+        
+        # Get PC scores
+        pca_scores <- as.data.frame(pca_result$x)
+        pca_scores$sample_id <- rownames(pca_scores)
+        
+        # Merge with metadata
+        pca_data <- merge(pca_scores, meta_sub, by = "sample_id")
+        
+        list(
+          error = FALSE,
+          pca_result = pca_result,
+          pca_data = pca_data,
+          var_explained = var_explained,
+          n_samples = nrow(meta_sub),
+          n_genes = nrow(expr_pca)
+        )
+        
+      }, error = function(e) {
+        return(list(error = TRUE, message = paste("Error:", e$message)))
+      })
+    })
+  })
+  
+  # PCA plot
+  output$pca_plot <- renderPlotly({
+    req(pca_results())
+    results <- pca_results()
+    
+    if (results$error) {
+      plot_ly() %>%
+        layout(
+          title = list(text = results$message, x = 0.5, xanchor = "center"),
+          xaxis = list(visible = FALSE),
+          yaxis = list(visible = FALSE)
+        )
+    } else {
+      pca_data <- results$pca_data
+      var_exp <- results$var_explained
+      
+      # Select color and shape variables
+      color_var <- input$pca_color_by
+      shape_var <- if (input$pca_shape_by == "none") NULL else input$pca_shape_by
+      
+      # Create plot
+      p <- plot_ly(pca_data, 
+                   x = ~PC1, y = ~PC2,
+                   type = 'scatter', mode = 'markers',
+                   color = ~get(color_var),
+                   symbol = if (!is.null(shape_var)) ~get(shape_var) else NULL,
+                   marker = list(size = 10),
+                   text = ~paste("Sample:", sample_id,
+                                "<br>Cell Line:", cell_line,
+                                "<br>SPP1:", spp1_profile,
+                                "<br>Cisplatine:", cisplatine,
+                                "<br>Comment:", comment,
+                                "<br>Replicate:", replicate),
+                   hoverinfo = 'text') %>%
+        layout(
+          title = paste0("PCA Analysis (", results$n_samples, " samples, ", results$n_genes, " genes)"),
+          xaxis = list(title = paste0("PC1 (", round(var_exp[1], 1), "%)")),
+          yaxis = list(title = paste0("PC2 (", round(var_exp[2], 1), "%)")),
+          hovermode = 'closest'
+        )
+      
+      p
+    }
+  })
+  
+  # Scree plot
+  output$scree_plot <- renderPlotly({
+    req(pca_results())
+    results <- pca_results()
+    
+    if (results$error) {
+      return(NULL)
+    }
+    
+    var_exp <- results$var_explained
+    n_pcs <- min(20, length(var_exp))
+    
+    scree_data <- data.frame(
+      PC = paste0("PC", 1:n_pcs),
+      Variance = var_exp[1:n_pcs],
+      PC_num = 1:n_pcs
+    )
+    
+    plot_ly(scree_data, x = ~PC_num, y = ~Variance,
+            type = 'scatter', mode = 'lines+markers',
+            marker = list(size = 8),
+            line = list(width = 2)) %>%
+      layout(
+        title = "Scree Plot",
+        xaxis = list(title = "Principal Component", dtick = 1),
+        yaxis = list(title = "Variance Explained (%)"),
+        hovermode = 'closest'
+      )
+  })
+  
+  # Variance table
+  output$variance_table <- renderDT({
+    req(pca_results())
+    results <- pca_results()
+    
+    if (results$error) {
+      return(NULL)
+    }
+    
+    var_exp <- results$var_explained
+    n_pcs <- min(10, length(var_exp))
+    
+    var_table <- data.frame(
+      PC = paste0("PC", 1:n_pcs),
+      `Variance Explained (%)` = round(var_exp[1:n_pcs], 2),
+      `Cumulative (%)` = round(cumsum(var_exp)[1:n_pcs], 2),
+      check.names = FALSE
+    )
+    
+    datatable(var_table, 
+              options = list(dom = 't', ordering = FALSE),
+              rownames = FALSE)
+  })
+  
+  # Loadings table
+  output$loadings_table <- renderDT({
+    req(pca_results())
+    results <- pca_results()
+    
+    if (results$error) {
+      return(NULL)
+    }
+    
+    pc_num <- as.numeric(input$pc_for_loadings)
+    loadings <- results$pca_result$rotation[, pc_num]
+    
+    # Get top 50 genes by absolute loading
+    top_loadings <- sort(abs(loadings), decreasing = TRUE)[1:min(50, length(loadings))]
+    top_genes <- names(top_loadings)
+    
+    loadings_table <- data.frame(
+      Gene = top_genes,
+      Loading = round(loadings[top_genes], 4),
+      `Abs Loading` = round(abs(loadings[top_genes]), 4),
+      check.names = FALSE
+    ) %>%
+      arrange(desc(`Abs Loading`))
+    
+    datatable(loadings_table,
+              options = list(pageLength = 20, dom = 'tp'),
+              rownames = FALSE)
+  })
+  
+  # Download PCA data
+  output$download_pca_plot <- downloadHandler(
+    filename = function() {
+      paste0("PCA_analysis_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      req(pca_results())
+      results <- pca_results()
+      if (!results$error) {
+        write.csv(results$pca_data, file, row.names = FALSE)
+      }
+    }
+  )
 }
 
 # ============================================================================
