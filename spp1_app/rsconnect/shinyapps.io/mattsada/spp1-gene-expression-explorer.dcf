@@ -5,6 +5,6 @@ account: mattsada
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 16872801
-bundleId: 11747187
+bundleId: 11747776
 url: https://mattsada.shinyapps.io/spp1-gene-expression-explorer/
 version: 1

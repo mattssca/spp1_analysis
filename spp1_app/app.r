@@ -29,6 +29,14 @@ if (!exists("metadata")) {
   stop("metadata not found in data/metadata.Rdata")
 }
 
+# Regulon analysis data
+source("funcitons/run_tf_comparison.R")
+load("data/acts_mat.Rdata")       # loads: acts_mat, net
+load("data/tf_genesets.Rdata")    # loads: tfs_all_deg
+
+metadata$sample_base     <- sub("_[0-9]+$", "", metadata$sample_id)
+regulon_sample_bases <- sort(unique(metadata$sample_base))
+
 # ============================================================================
 # ANALYSIS FUNCTION
 # ============================================================================
@@ -222,10 +230,11 @@ ui <- dashboardPage(
       menuItem("Gene Expression Heatmap", tabName = "heatmap", icon = icon("table")),
       menuItem("DEG Comparison", tabName = "deg_comparison", icon = icon("chart-line")),
       menuItem("Volcano Plot", tabName = "volcano_plot", icon = icon("volcano")),
-      menuItem("GO Enrichment Analysis", tabName = "go_enrichment", icon = icon("sitemap")),
+      menuItem("Enrichment Analysis", tabName = "go_enrichment", icon = icon("sitemap")),
       menuItem("SPP1 Correlation", tabName = "spp1_correlation", icon = icon("project-diagram")),
       menuItem("Gene Expression Profile", tabName = "gene_profile", icon = icon("chart-area")),
-      menuItem("PCA Analysis", tabName = "pca_analysis", icon = icon("project-diagram"))
+      menuItem("PCA Analysis", tabName = "pca_analysis", icon = icon("project-diagram")),
+      menuItem("Regulon Analysis", tabName = "regulon", icon = icon("dna"))
     )
   ),
   
@@ -241,9 +250,22 @@ ui <- dashboardPage(
             status = "primary",
             
             h4("Genes Input"),
-            textAreaInput("genes_input", "Genes of Interest (one per line, default is CD44 and ITGa/b):",
-                          value = "CD44\nITGA1\nITGA10\nITGA11\nITGA2\nITGA2B\nITGA3\nITGA4\nITGA5\nITGA6\nITGA7\nITGA8\nITGA9\nITGAD\nITGAE\nITGAL\nITGAM\nITGAV\nITGAX\nITGB1\nITGB1BP1\nITGB1BP2\nITGB2\nITGB3\nITGB3BP\nITGB4\nITGB5\nITGB6\nITGB7\nITGB8\nITGBL1",
-                          rows = 8),
+            radioButtons("gene_input_source", "Gene source:",
+                        choices = c("Manual entry" = "manual",
+                                    "From enrichment results" = "enrichment"),
+                        selected = "manual"),
+            conditionalPanel(
+              condition = "input.gene_input_source == 'manual'",
+              textAreaInput("genes_input", "Genes of Interest (one per line, default is CD44 and ITGa/b):",
+                            value = "CD44\nITGA1\nITGA10\nITGA11\nITGA2\nITGA2B\nITGA3\nITGA4\nITGA5\nITGA6\nITGA7\nITGA8\nITGA9\nITGAD\nITGAE\nITGAL\nITGAM\nITGAV\nITGAX\nITGB1\nITGB1BP1\nITGB1BP2\nITGB2\nITGB3\nITGB3BP\nITGB4\nITGB5\nITGB6\nITGB7\nITGB8\nITGBL1",
+                            rows = 8)
+            ),
+            conditionalPanel(
+              condition = "input.gene_input_source == 'enrichment'",
+              selectInput("enrichment_term_select", "Select enrichment term:",
+                         choices = NULL),
+              helpText("Run enrichment analysis first to populate this list")
+            ),
             
             h4("Filters:"),
             checkboxGroupInput("filter_cell_line", "Cell Line:",
@@ -265,7 +287,7 @@ ui <- dashboardPage(
                                     "SPP1 Profile" = "spp1_profile",
                                     "Cisplatine" = "cisplatine",
                                     "Comment" = "comment"),
-                        selected = "replicate"),
+                        selected = "cell_line"),
             
             h4("Sort Samples (hierarchical):"),
             selectInput("sort_by_1", "Primary sort:",
@@ -275,7 +297,7 @@ ui <- dashboardPage(
                                     "SPP1 Profile" = "spp1_profile",
                                     "Cisplatine" = "cisplatine",
                                     "Comment" = "comment"),
-                        selected = "none"),
+                        selected = "cisplatine"),
             selectInput("sort_by_2", "Secondary sort:",
                         choices = c("None" = "none", 
                                     "Replicate" = "replicate", 
@@ -283,7 +305,7 @@ ui <- dashboardPage(
                                     "SPP1 Profile" = "spp1_profile",
                                     "Cisplatine" = "cisplatine",
                                     "Comment" = "comment"),
-                        selected = "none"),
+                        selected = "spp1_profile"),
             selectInput("sort_by_3", "Tertiary sort:",
                         choices = c("None" = "none", 
                                     "Replicate" = "replicate", 
@@ -402,11 +424,11 @@ ui <- dashboardPage(
         )
       ),
       
-      # Third tab - GO Enrichment Analysis
+      # Third tab - Enrichment Analysis
       tabItem(tabName = "go_enrichment",
         fluidRow(
           box(
-            title = "Pathway Enrichment Parameters",
+            title = "Enrichment Analysis Parameters",
             width = 3,
             solidHeader = TRUE,
             status = "primary",
@@ -423,35 +445,15 @@ ui <- dashboardPage(
             helpText(HTML("<b>GO:</b> Gene Ontology terms (BP, MF, CC)<br><b>KEGG:</b> KEGG pathway database")),
             hr(),
             h4("Analysis Method"),
-            radioButtons("go_method", "Enrichment Method:",
-                        choices = c("Over-Representation Analysis (ORA)" = "ORA",
-                                    "Gene Set Enrichment Analysis (GSEA)" = "GSEA"),
-                        selected = "ORA"),
-            helpText(HTML("<b>ORA:</b> Tests if terms are over-represented in genes passing thresholds. 
-                          <br><b>GSEA:</b> Tests if term genes are enriched at top/bottom of ranked gene list. 
-                          Uses all genes, no cutoffs needed.")),
+            helpText(HTML("<b>Over-Representation Analysis (ORA):</b> Tests if pathway terms are over-represented in genes passing significance thresholds.")),
             hr(),
-            conditionalPanel(
-              condition = "input.go_method == 'ORA'",
-              h4("Gene Selection Thresholds"),
-              numericInput("go_logfc_threshold", "Log Fold Change threshold (|logFC| > threshold):",
-                          min = 0, max = 10, value = 1, step = 0.1),
-              numericInput("go_adjp_threshold", "Adjusted P-value threshold (adj.p < threshold):",
-                          min = 0, max = 1, value = 0.05, step = 0.01),
-              helpText("Genes exceeding these thresholds will be used for enrichment"),
-              hr()
-            ),
-            conditionalPanel(
-              condition = "input.go_method == 'GSEA'",
-              h4("Gene Ranking"),
-              radioButtons("gsea_rank_by", "Rank genes by:",
-                          choices = c("Log Fold Change" = "logFC",
-                                      "t-statistic" = "t",
-                                      "-log10(p) × sign(logFC)" = "signed_pval"),
-                          selected = "logFC"),
-              helpText("Determines how genes are ranked for GSEA"),
-              hr()
-            ),
+            h4("Gene Selection Thresholds"),
+            numericInput("go_logfc_threshold", "Log Fold Change threshold (|logFC| > threshold):",
+                        min = 0, max = 10, value = 1, step = 0.1),
+            numericInput("go_adjp_threshold", "Adjusted P-value threshold (adj.p < threshold):",
+                        min = 0, max = 1, value = 0.05, step = 0.01),
+            helpText("Genes exceeding these thresholds will be used for enrichment"),
+            hr(),
             conditionalPanel(
               condition = "input.pathway_database == 'GO'",
               h4("GO Ontology"),
@@ -476,7 +478,7 @@ ui <- dashboardPage(
           ),
           
           box(
-            title = "Pathway Enrichment Results",
+            title = "Enrichment Analysis Results",
             width = 9,
             solidHeader = TRUE,
             status = "info",
@@ -492,6 +494,15 @@ ui <- dashboardPage(
                 downloadButton("download_go_results", "Download Full Results", 
                               class = "btn-success", style = "margin-bottom: 10px;"),
                 DTOutput("go_full_table")
+              ),
+              tabPanel("Gene Lists",
+                h4("Genes by Enrichment Term"),
+                helpText("Select a term to view genes. Copy genes to use in Gene Expression Heatmap tab."),
+                selectInput("gene_list_term", "Select term:",
+                           choices = NULL),
+                verbatimTextOutput("gene_list_display"),
+                downloadButton("download_gene_list", "Download Gene List", 
+                              class = "btn-info", style = "margin-top: 10px;")
               )
             )
           )
@@ -719,6 +730,74 @@ ui <- dashboardPage(
             )
           )
         )
+      ),
+
+      # Regulon Analysis tab
+      tabItem(tabName = "regulon",
+        fluidRow(
+          box(
+            title = "Analysis Parameters",
+            width = 3,
+            solidHeader = TRUE,
+            status = "primary",
+
+            h4("Define Contrasts"),
+            helpText("Each contrast compares Group 2 vs Group 1."),
+            sliderInput("n_regulon_contrasts", "Number of contrasts:",
+                        min = 1, max = 8, value = 1, step = 1),
+            uiOutput("regulon_contrast_ui"),
+            hr(),
+
+            h4("TF Gene Set"),
+            selectInput("regulon_tf_set", "Restrict TFs to:",
+                        choices = c(
+                          "All DEG targets"      = "all_deg",
+                          "All TFs in CollecTRI" = "all"
+                        ),
+                        selected = "all_deg"),
+            hr(),
+
+            h4("Heatmap Options"),
+            sliderInput("regulon_top_n_hm", "Top N variable TFs in heatmap:",
+                        min = 10, max = 100, value = 50, step = 5),
+            checkboxInput("regulon_scale_hm", "Z-score rows (recommended)", value = TRUE),
+            sliderInput("regulon_label_n", "Top N TFs to label in volcano:",
+                        min = 5, max = 30, value = 10, step = 1),
+            hr(),
+
+            actionButton("run_regulon", "Run Regulon Analysis", class = "btn-primary"),
+            br(), br(),
+            textOutput("regulon_status")
+          ),
+
+          box(
+            title = "Results",
+            width = 9,
+            solidHeader = TRUE,
+            status = "info",
+
+            tabsetPanel(
+              tabPanel("Volcano Plot",
+                br(),
+                downloadButton("download_regulon_volcano", "Download PNG",
+                               class = "btn-success", style = "margin-bottom:10px;"),
+                plotOutput("regulon_volcano", height = "500px")
+              ),
+              tabPanel("Heatmap",
+                br(),
+                downloadButton("download_regulon_heatmap", "Download PNG",
+                               class = "btn-success", style = "margin-bottom:10px;"),
+                InteractiveComplexHeatmapOutput("regulon_heatmap")
+              ),
+              tabPanel("Results Table",
+                br(),
+                downloadButton("download_regulon_table", "Download CSV",
+                               class = "btn-success", style = "margin-bottom:10px;"),
+                DTOutput("regulon_table")
+              )
+            )
+          )
+        )
       )
     )
   )
@@ -819,8 +898,33 @@ server <- function(input, output, session) {
   
   # Gene Visualization
   viz_results <- eventReactive(input$run_viz, {
-    genes <- trimws(strsplit(input$genes_input, "\n")[[1]])
-    genes <- genes[genes != ""]
+    # Get genes based on source
+    if (input$gene_input_source == "manual") {
+      genes <- trimws(strsplit(input$genes_input, "\n")[[1]])
+      genes <- genes[genes != ""]
+    } else {
+      # Get genes from enrichment results
+      req(go_enrichment_results())
+      req(input$enrichment_term_select)
+      
+      results <- go_enrichment_results()
+      if (results$error) {
+        showNotification("Please run enrichment analysis first", type = "error")
+        return(NULL)
+      }
+      
+      # Get the selected term's genes
+      term_data <- results$results@result %>%
+        filter(ID == input$enrichment_term_select)
+      
+      if (nrow(term_data) == 0) {
+        showNotification("No genes found for selected term", type = "error")
+        return(NULL)
+      }
+      
+      # Extract gene symbols from ORA results (geneID column)
+      genes <- strsplit(term_data$geneID, "/")[[1]]
+    }
     
     req(length(genes) > 0)
     
@@ -1178,12 +1282,12 @@ server <- function(input, output, session) {
   go_enrichment_results <- eventReactive(input$run_go_enrichment, {
     withProgress(message = 'Running pathway enrichment...', value = 0, {
       tryCatch({
-        req(input$go_comparison, input$go_method, input$pathway_database)
+        req(input$go_comparison, input$pathway_database)
         
         # Get DEG data for the selected comparison
         deg_data <- deg_results[[input$go_comparison]]
         
-        if (input$go_method == "ORA") {
+        # ============ Over-Representation Analysis (ORA) ============
           # ============ Over-Representation Analysis ============
           incProgress(0.1, detail = "Filtering genes...")
           
@@ -1263,141 +1367,22 @@ server <- function(input, output, session) {
             ))
           }
           
-          # Return results
-          list(
-            error = FALSE,
-            results = enrich_result,
-            method = "ORA",
-            database = input$pathway_database,
-            n_genes = length(gene_list),
-            n_mapped = nrow(gene_entrez),
-            n_terms = nrow(enrich_result@result)
-          )
-          
-        } else {
-          # ============ Gene Set Enrichment Analysis (GSEA) ============
-          incProgress(0.1, detail = "Preparing gene list...")
-          
-          # Create ranked gene list based on selected metric
-          if (input$gsea_rank_by == "logFC") {
-            ranked_values <- deg_data$logFC
-          } else if (input$gsea_rank_by == "t") {
-            ranked_values <- deg_data$t
-          } else {  # signed_pval
-            ranked_values <- -log10(deg_data$P.Value) * sign(deg_data$logFC)
-          }
-          
-          # Create named vector and remove any NAs or Inf values
-          gene_list_ranked <- setNames(ranked_values, deg_data$gene)
-          gene_list_ranked <- gene_list_ranked[!is.na(gene_list_ranked) & 
-                                                !is.infinite(gene_list_ranked)]
-          
-          # Sort in decreasing order
-          gene_list_ranked <- sort(gene_list_ranked, decreasing = TRUE)
-          
-          incProgress(0.2, detail = "Converting gene IDs...")
-          
-          # Convert gene symbols to Entrez IDs
-          if (!is.null(gene_id_cache$symbol_to_entrez) && nrow(gene_id_cache$symbol_to_entrez) > 0) {
-            # Use pre-built cache
-            gene_mapping <- gene_id_cache$symbol_to_entrez
-          } else {
-            # Fallback: convert on-the-fly
-            gene_mapping <- bitr(names(gene_list_ranked), 
-                                fromType = "SYMBOL",
-                                toType = "ENTREZID",
-                                OrgDb = org.Hs.eg.db)
-          }
-          
-          if (nrow(gene_mapping) == 0) {
-            return(list(
-              error = TRUE,
-              message = "No genes could be mapped to Entrez IDs. Check gene symbols.",
-              method = "GSEA",
-              database = input$pathway_database
-            ))
-          }
-          
-          # Create mapping preserving order
-          # Match genes to get their ranking values
-          gene_df <- data.frame(
-            SYMBOL = names(gene_list_ranked),
-            rank_value = as.numeric(gene_list_ranked),
-            stringsAsFactors = FALSE
-          )
-          
-          # Merge with Entrez IDs
-          gene_df <- merge(gene_df, gene_mapping, by = "SYMBOL", all.x = FALSE)
-          
-          # Remove duplicates (keep first/highest ranked)
-          gene_df <- gene_df[!duplicated(gene_df$ENTREZID), ]
-          
-          # Sort by rank_value in decreasing order
-          gene_df <- gene_df[order(gene_df$rank_value, decreasing = TRUE), ]
-          
-          # Create final gene list
-          gene_list_entrez <- setNames(gene_df$rank_value, gene_df$ENTREZID)
-          
-          # Final check: ensure it's properly sorted and has no issues
-          if (!all(diff(gene_list_entrez) <= 0)) {
-            # Re-sort if somehow not sorted
-            gene_list_entrez <- sort(gene_list_entrez, decreasing = TRUE)
-          }
-          
-          incProgress(0.4, detail = "Running GSEA...")
-          
-          # Perform GSEA based on database selection
-          if (input$pathway_database == "GO") {
-            # GO GSEA
-            gsea_result <- gseGO(
-              geneList = gene_list_entrez,
-              OrgDb = org.Hs.eg.db,
-              ont = input$go_ontology,
-              pvalueCutoff = input$go_pval_cutoff,
-              pAdjustMethod = "BH",
-              nPermSimple = 1000,
-              verbose = FALSE
-            )
-          } else {
-            # KEGG GSEA
-            gsea_result <- gseKEGG(
-              geneList = gene_list_entrez,
-              organism = "hsa",
-              pvalueCutoff = input$go_pval_cutoff,
-              pAdjustMethod = "BH",
-              nPermSimple = 1000,
-              verbose = FALSE
-            )
-          }
-          
-          incProgress(0.3, detail = "Processing results...")
-          
-          if (is.null(gsea_result) || nrow(gsea_result@result) == 0) {
-            return(list(
-              error = TRUE,
-              message = paste("No significant", input$pathway_database, "terms found. Try relaxing the p-value cutoff."),
-              method = "GSEA",
-              database = input$pathway_database
-            ))
-          }
-          
-          # Return results
-          list(
-            error = FALSE,
-            results = gsea_result,
-            method = "GSEA",
-            database = input$pathway_database,
-            n_genes = length(gene_list_ranked),
-            n_mapped = length(gene_list_entrez),
-            n_terms = nrow(gsea_result@result)
-          )
-        }
+        # Return results
+        list(
+          error = FALSE,
+          results = enrich_result,
+          method = "ORA",
+          database = input$pathway_database,
+          n_genes = length(gene_list),
+          n_mapped = nrow(gene_entrez),
+          n_terms = nrow(enrich_result@result)
+        )
         
       }, error = function(e) {
         return(list(
           error = TRUE,
           message = paste("Error:", e$message),
-          method = input$go_method,
+          method = "ORA",
           database = input$pathway_database
         ))
       })
@@ -1446,14 +1431,14 @@ server <- function(input, output, session) {
           xaxis = list(visible = FALSE),
           yaxis = list(visible = FALSE)
         )
-    } else if (results$method == "ORA") {
+    } else {
       # ============ ORA Bubble Plot ============
       go_data <- results$results@result %>%
         head(20) %>%  # Show top 20 terms
         mutate(
           GeneRatio_num = sapply(strsplit(GeneRatio, "/"), function(x) as.numeric(x[1])/as.numeric(x[2])),
           log_pval = -log10(p.adjust),
-          Description = forcats::fct_reorder(Description, GeneRatio_num)
+          Description = forcats::fct_reorder(Description, log_pval)  # Sort by significance
         )
       
       plot_ly(go_data,
@@ -1486,50 +1471,6 @@ server <- function(input, output, session) {
           margin = list(l = 300),
           showlegend = FALSE
         )
-    } else {
-      # ============ GSEA Bubble Plot ============
-      gsea_data <- results$results@result %>%
-        head(20) %>%  # Show top 20 terms
-        mutate(
-          log_pval = -log10(p.adjust),
-          Description = forcats::fct_reorder(Description, NES)
-        )
-      
-      plot_ly(gsea_data,
-              x = ~NES,
-              y = ~Description,
-              type = 'scatter',
-              mode = 'markers',
-              marker = list(
-                size = ~setSize,
-                sizemode = 'diameter',
-                sizeref = max(gsea_data$setSize) / 50,
-                color = ~log_pval,
-                colorscale = 'Viridis',
-                colorbar = list(title = "-log10(adj.p)"),
-                line = list(width = 1, color = 'rgba(0,0,0,0.3)')
-              ),
-              text = ~paste0(
-                "GO Term: ", Description,
-                "<br>NES: ", round(NES, 3),
-                "<br>Set Size: ", setSize,
-                "<br>Enrichment Score: ", round(enrichmentScore, 3),
-                "<br>P-value: ", format(pvalue, scientific = TRUE, digits = 3),
-                "<br>Adj. P-value: ", format(p.adjust, scientific = TRUE, digits = 3)
-              ),
-              hoverinfo = 'text'
-      ) %>%
-        layout(
-          title = paste("GSEA Results -", input$go_ontology),
-          xaxis = list(title = "Normalized Enrichment Score (NES)", zeroline = TRUE),
-          yaxis = list(title = ""),
-          margin = list(l = 300),
-          showlegend = FALSE
-        ) %>%
-        add_segments(x = 0, xend = 0, 
-                    y = 0, yend = nrow(gsea_data) + 1,
-                    line = list(color = "red", dash = "dash", width = 1),
-                    showlegend = FALSE, inherit = FALSE)
     }
   })
   
@@ -1543,7 +1484,7 @@ server <- function(input, output, session) {
       datatable(data.frame(Message = results$message),
                 options = list(dom = 't'),
                 rownames = FALSE)
-    } else if (results$method == "ORA") {
+    } else {
       # ORA summary table
       summary_data <- results$results@result %>%
         head(20) %>%
@@ -1561,30 +1502,7 @@ server <- function(input, output, session) {
           ordering = TRUE
         ),
         rownames = FALSE,
-        caption = "Top 20 GO terms (ORA)"
-      )
-    } else {
-      # GSEA summary table
-      summary_data <- results$results@result %>%
-        head(20) %>%
-        dplyr::select(ID, Description, setSize, enrichmentScore, NES, pvalue, p.adjust) %>%
-        mutate(
-          enrichmentScore = round(enrichmentScore, 3),
-          NES = round(NES, 3),
-          pvalue = format(pvalue, scientific = TRUE, digits = 3),
-          p.adjust = format(p.adjust, scientific = TRUE, digits = 3)
-        )
-      
-      datatable(
-        summary_data,
-        options = list(
-          pageLength = 20,
-          scrollX = TRUE,
-          ordering = TRUE
-        ),
-        rownames = FALSE,
-        colnames = c("ID", "Description", "Set Size", "ES", "NES", "P-value", "Adj. P-value"),
-        caption = "Top 20 GO terms (GSEA)"
+        caption = "Top 20 enriched terms (ORA)"
       )
     }
   })
@@ -1607,7 +1525,7 @@ server <- function(input, output, session) {
           p.adjust = format(p.adjust, scientific = TRUE, digits = 3)
         )
       
-      # Format qvalue for ORA (GSEA doesn't always have qvalue)
+      # Format qvalue if present
       if ("qvalue" %in% colnames(full_data)) {
         full_data <- full_data %>%
           mutate(qvalue = format(qvalue, scientific = TRUE, digits = 3))
@@ -1641,6 +1559,77 @@ server <- function(input, output, session) {
       if (!results$error) {
         write.csv(results$results@result, file, row.names = FALSE)
       }
+    }
+  )
+  
+  # Update enrichment term dropdowns when results are available
+  observe({
+    req(go_enrichment_results())
+    results <- go_enrichment_results()
+    
+    if (!results$error && nrow(results$results@result) > 0) {
+      # Create choices with term description as label and ID as value
+      term_choices <- setNames(
+        results$results@result$ID,
+        paste0(results$results@result$Description, " (", results$results@result$Count, " genes)")
+      )
+      
+      # Update both dropdowns
+      updateSelectInput(session, "gene_list_term", 
+                       choices = term_choices,
+                       selected = term_choices[1])
+      updateSelectInput(session, "enrichment_term_select",
+                       choices = term_choices,
+                       selected = term_choices[1])
+    }
+  })
+  
+  # Display gene list for selected term
+  output$gene_list_display <- renderText({
+    req(go_enrichment_results())
+    req(input$gene_list_term)
+    
+    results <- go_enrichment_results()
+    if (results$error) {
+      return("No enrichment results available. Please run enrichment analysis first.")
+    }
+    
+    # Get the selected term's genes
+    term_data <- results$results@result %>%
+      filter(ID == input$gene_list_term)
+    
+    if (nrow(term_data) == 0) {
+      return("No genes found for selected term")
+    }
+    
+    # Extract gene symbols from ORA results (geneID column)
+    genes <- strsplit(term_data$geneID, "/")[[1]]
+    
+    # Return genes one per line for easy copying
+    paste(genes, collapse = "\n")
+  })
+  
+  # Download handler for gene list
+  output$download_gene_list <- downloadHandler(
+    filename = function() {
+      req(input$gene_list_term)
+      results <- go_enrichment_results()
+      term_desc <- results$results@result %>%
+        filter(ID == input$gene_list_term) %>%
+        pull(Description)
+      paste0("genes_", gsub("[^A-Za-z0-9]", "_", term_desc), "_", Sys.Date(), ".txt")
+    },
+    content = function(file) {
+      req(go_enrichment_results())
+      req(input$gene_list_term)
+      
+      results <- go_enrichment_results()
+      term_data <- results$results@result %>%
+        filter(ID == input$gene_list_term)
+      
+      # Extract gene list from ORA results (geneID column)
+      genes <- strsplit(term_data$geneID, "/")[[1]]
+      writeLines(genes, file)
     }
   )
   
@@ -2423,6 +2412,173 @@ server <- function(input, output, session) {
       if (!results$error) {
         write.csv(results$pca_data, file, row.names = FALSE)
       }
+    }
+  )
+
+  # ============================================================================
+  # REGULON ANALYSIS TAB
+  # ============================================================================
+
+  # Dynamic contrast input rows
+  output$regulon_contrast_ui <- renderUI({
+    n <- input$n_regulon_contrasts
+    lapply(1:n, function(i) {
+      wellPanel(
+        style = "padding: 8px; margin-bottom: 6px;",
+        strong(paste("Contrast", i)),
+        fluidRow(
+          column(6,
+            selectInput(paste0("reg_sb1_", i), "Group 1 (reference):",
+                        choices = regulon_sample_bases,
+                        selected = regulon_sample_bases[min(i * 2 - 1, length(regulon_sample_bases))])
+          ),
+          column(6,
+            selectInput(paste0("reg_sb2_", i), "Group 2 (test):",
+                        choices = regulon_sample_bases,
+                        selected = regulon_sample_bases[min(i * 2, length(regulon_sample_bases))])
+          )
+        ),
+        fluidRow(
+          column(8,
+            textInput(paste0("reg_label_", i), "Label:",
+                      value = paste("Contrast", i))
+          ),
+          column(4,
+            selectInput(paste0("reg_context_", i), "Context:",
+                        choices = c("SPP1 x cisplatin", "cisplatin only", "SPP1 only", "custom"),
+                        selected = "SPP1 x cisplatin")
+          )
+        )
+      )
+    })
+  })
+
+  # Collect contrasts from dynamic inputs
+  regulon_contrasts <- reactive({
+    n <- input$n_regulon_contrasts
+    req(n)
+
+    contrasts <- lapply(1:n, function(i) {
+      sb1     <- input[[paste0("reg_sb1_",    i)]]
+      sb2     <- input[[paste0("reg_sb2_",    i)]]
+      label   <- input[[paste0("reg_label_",  i)]]
+      context <- input[[paste0("reg_context_",i)]]
+
+      if (is.null(sb1) || is.null(sb2) || sb1 == sb2) return(NULL)
+
+      list(
+        sb1     = sb1,
+        sb2     = sb2,
+        label   = if (is.null(label)   || label   == "") paste(sb2, "vs", sb1) else label,
+        context = if (is.null(context) || context == "") "custom" else context
+      )
+    })
+
+    Filter(Negate(is.null), contrasts)
+  })
+
+  # Run analysis
+  regulon_results <- eventReactive(input$run_regulon, {
+    contrasts <- regulon_contrasts()
+
+    if (length(contrasts) == 0) {
+      showNotification("Please define at least one valid contrast (Group 1 ≠ Group 2).",
+                       type = "error")
+      return(NULL)
+    }
+
+    tf_set <- switch(input$regulon_tf_set,
+      all_deg = tfs_all_deg,
+      all     = NULL
+    )
+
+    withProgress(message = "Running TF activity analysis...", value = 0, {
+      tryCatch({
+        incProgress(0.3, detail = "Computing differential activity...")
+
+        res <- run_tf_comparison(
+          contrasts     = contrasts,
+          acts_mat      = acts_mat,
+          this_metadata = metadata,
+          tf_set        = tf_set,
+          top_n_hm      = input$regulon_top_n_hm,
+          label_n       = input$regulon_label_n,
+          scale_hm      = input$regulon_scale_hm
+        )
+
+        incProgress(0.7, detail = "Done.")
+        res
+
+      }, error = function(e) {
+        showNotification(paste("Error:", e$message), type = "error")
+        NULL
+      })
+    })
+  })
+
+  # Status message
+  output$regulon_status <- renderText({
+    req(regulon_results())
+    n_tfs       <- length(unique(regulon_results()$results_df$TF))
+    n_contrasts <- length(unique(regulon_results()$results_df$contrast))
+    paste0("Done: ", n_tfs, " TFs across ", n_contrasts, " contrast(s).")
+  })
+
+  # Volcano plot
+  output$regulon_volcano <- renderPlot({
+    req(regulon_results())
+    print(regulon_results()$volcano)
+  }, height = 500)
+
+  # Heatmap (interactive)
+  observeEvent(regulon_results(), {
+    req(regulon_results())
+    makeInteractiveComplexHeatmap(input, output, session,
+                                  regulon_results()$heatmap,
+                                  "regulon_heatmap")
+  })
+
+  # Results table
+  output$regulon_table <- renderDT({
+    req(regulon_results())
+
+    regulon_results()$results_df %>%
+      mutate(
+        logFC     = round(logFC, 3),
+        P.Value   = format(P.Value,   scientific = TRUE, digits = 3),
+        adj.P.Val = format(adj.P.Val, scientific = TRUE, digits = 3)
+      ) %>%
+      datatable(
+        filter  = "top",
+        options = list(pageLength = 25, scrollX = TRUE),
+        rownames = FALSE
+      )
+  })
+
+  # Downloads
+  output$download_regulon_volcano <- downloadHandler(
+    filename = function() paste0("regulon_volcano_", Sys.Date(), ".png"),
+    content  = function(file) {
+      req(regulon_results())
+      ggsave(file, regulon_results()$volcano, width = 16, height = 6, dpi = 300)
+    }
+  )
+
+  output$download_regulon_heatmap <- downloadHandler(
+    filename = function() paste0("regulon_heatmap_", Sys.Date(), ".png"),
+    content  = function(file) {
+      req(regulon_results())
+      png(file, width = 14, height = 10, units = "in", res = 300)
+      draw(regulon_results()$heatmap)
+      dev.off()
+    }
+  )
+
+  output$download_regulon_table <- downloadHandler(
+    filename = function() paste0("regulon_results_", Sys.Date(), ".csv"),
+    content  = function(file) {
+      req(regulon_results())
+      write.csv(regulon_results()$results_df, file, row.names = FALSE)
     }
   )
 }
