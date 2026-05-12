@@ -4767,6 +4767,37 @@
       "Maintainer": "Lionel Henry <lionel@posit.co>",
       "Repository": "CRAN"
     },
+    "limma": {
+      "Package": "limma",
+      "Version": "3.60.4",
+      "Source": "Bioconductor",
+      "Type": "Package",
+      "Title": "Linear Models for Microarray Data",
+      "Description": "Data analysis, linear models and differential expression for microarray and RNA-seq data.",
+      "Depends": [
+        "R (>= 3.6.0)"
+      ],
+      "Imports": [
+        "grDevices",
+        "graphics",
+        "stats",
+        "utils",
+        "methods",
+        "statmod"
+      ],
+      "VignetteBuilder": "knitr",
+      "License": "GPL (>=2)",
+      "URL": "https://bioinf.wehi.edu.au/limma/",
+      "biocViews": "ExonArray, GeneExpression, Transcription, DifferentialExpression, Microarray, RNASeq",
+      "git_url": "https://git.bioconductor.org/packages/limma",
+      "git_branch": "RELEASE_3_19",
+      "git_last_commit": "481eb97",
+      "git_last_commit_date": "2024-07-15",
+      "Repository": "Bioconductor 3.19",
+      "NeedsCompilation": "yes",
+      "Author": "Gordon Smyth [cre, aut]",
+      "Maintainer": "Gordon Smyth <smyth@wehi.edu.au>"
+    },
     "lubridate": {
       "Package": "lubridate",
       "Version": "1.9.3",
@@ -6641,6 +6672,26 @@
       "BugReports": "https://github.com/kevinushey/sourcetools/issues",
       "Encoding": "UTF-8",
       "NeedsCompilation": "yes",
+      "Repository": "CRAN"
+    },
+    "statmod": {
+      "Package": "statmod",
+      "Version": "1.5.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Statistical Modeling",
+      "Description": "A collection of algorithms and functions to aid statistical modeling.",
+      "Depends": [
+        "R (>= 3.0.0)"
+      ],
+      "Imports": [
+        "stats",
+        "graphics"
+      ],
+      "License": "GPL-2 | GPL-3",
+      "NeedsCompilation": "yes",
+      "Author": "Gordon Smyth [cre, aut], Lizhong Chen [aut]",
+      "Maintainer": "Gordon Smyth <smyth@wehi.edu.au>",
       "Repository": "CRAN"
     },
     "stringi": {
