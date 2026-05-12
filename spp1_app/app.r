@@ -1119,7 +1119,7 @@ ui <- dashboardPage(
                 br(),
                 downloadButton("download_regulon_volcano", "Download PNG",
                                class = "btn-success", style = "margin-bottom:10px;"),
-                plotOutput("regulon_volcano", height = "500px")
+                plotlyOutput("regulon_volcano", height = "500px")
               ),
               tabPanel("Heatmap",
                 br(),
@@ -2780,10 +2780,101 @@ server <- function(input, output, session) {
   })
 
   # Volcano plot
-  output$regulon_volcano <- renderPlot({
+  output$regulon_volcano <- renderPlotly({
     req(regulon_results())
-    print(regulon_results()$volcano)
-  }, height = 500)
+
+    df <- regulon_results()$results_df %>%
+      mutate(
+        sig = case_when(
+          adj.P.Val < 0.05 & logFC > 0 ~ "Up",
+          adj.P.Val < 0.05 & logFC < 0 ~ "Down",
+          TRUE ~ "NS"
+        ),
+        neg_log10_p = -log10(P.Value)
+      ) %>%
+      group_by(contrast) %>%
+      mutate(
+        rank_p     = rank(P.Value),
+        show_label = sig != "NS" & rank_p <= 10
+      ) %>%
+      ungroup()
+
+    sig_groups <- list(
+      list(name = "Up",   color = "#D73027"),
+      list(name = "Down", color = "#4575B4"),
+      list(name = "NS",   color = "grey70")
+    )
+
+    make_panel <- function(ct, show_leg) {
+      sub  <- filter(df, contrast == ct)
+      labs <- filter(sub, show_label)
+
+      p <- plot_ly()
+      for (sg in sig_groups) {
+        grp <- filter(sub, sig == sg$name)
+        if (nrow(grp) == 0) next
+        p <- add_trace(p,
+          data        = grp,
+          x           = ~logFC, y = ~neg_log10_p,
+          type        = 'scatter', mode = 'markers',
+          name        = sg$name,
+          legendgroup = sg$name,
+          showlegend  = show_leg,
+          marker      = list(color = sg$color, size = 7, opacity = 0.7),
+          text        = ~paste0(
+            "TF: ", TF,
+            "<br>logFC: ", round(logFC, 3),
+            "<br>-log10(p): ", round(neg_log10_p, 3),
+            "<br>adj.P.Val: ", format(adj.P.Val, scientific = TRUE, digits = 3)
+          ),
+          hoverinfo   = 'text',
+          inherit     = FALSE
+        )
+      }
+
+      if (nrow(labs) > 0) {
+        p <- add_trace(p, data = labs,
+          x = ~logFC, y = ~neg_log10_p,
+          type = 'scatter', mode = 'text',
+          text = ~TF, textposition = 'top center',
+          textfont = list(size = 9, color = 'black'),
+          hoverinfo = 'skip', showlegend = FALSE,
+          inherit = FALSE
+        )
+      }
+
+      p %>% layout(
+        annotations = list(
+          list(text = ct, x = 0.5, y = 1, xref = "paper", yref = "paper",
+               showarrow = FALSE, font = list(size = 13), xanchor = "center")
+        ),
+        xaxis  = list(title = "log2 fold change (TF activity)", zeroline = TRUE),
+        yaxis  = list(title = "-log10(p-value)"),
+        shapes = list(
+          list(type = "line", x0 = 0, x1 = 1, xref = "paper",
+               y0 = -log10(0.05), y1 = -log10(0.05),
+               line = list(color = "grey50", dash = "dash", width = 1)),
+          list(type = "line", x0 = 0, x1 = 0, y0 = 0, y1 = 1, yref = "paper",
+               line = list(color = "grey50", dash = "dash", width = 1))
+        )
+      )
+    }
+
+    contrast_levels <- unique(df$contrast)
+    n_ct <- length(contrast_levels)
+    panels <- lapply(seq_along(contrast_levels), function(i) {
+      make_panel(contrast_levels[i], i == 1)
+    })
+
+    if (n_ct == 1) {
+      panels[[1]]
+    } else {
+      subplot(panels, nrows = ceiling(n_ct / 2),
+              shareX = FALSE, shareY = FALSE,
+              titleX = TRUE, titleY = TRUE, margin = 0.07) %>%
+        layout(title = "TF Activity: Volcano Plots")
+    }
+  })
 
   # Heatmap (interactive)
   observeEvent(regulon_results(), {
