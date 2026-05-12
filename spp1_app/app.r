@@ -8,9 +8,22 @@ library(circlize)
 library(grid)
 library(plotly)
 library(DT)
-library(clusterProfiler)
-library(org.Hs.eg.db)
-library(enrichplot)
+library(enrichR)
+
+# ============================================================================
+# APP COLOUR PALETTE  –  edit these to restyle the entire app
+# ============================================================================
+COL_HEADER       <- "#4A5568"
+COL_HEADER_DARK  <- "#2D3748"
+COL_SIDEBAR      <- "#1A202C"
+COL_SIDEBAR_ACT  <- "#2D3748"
+COL_ACCENT       <- "#ED8936"
+COL_DOWNLOAD     <- "#38A169"
+COL_DOWNLOAD_DRK <- "#2F855A"
+COL_DOWNLOAD_DKR <- "#276749"
+COL_PLOT_LOW     <- "#EDF2F7"   # enrichment bubble plot low end (light slate)
+COL_PLOT_MID     <- "#ED8936"   # enrichment bubble plot mid (accent amber)
+COL_PLOT_HIGH    <- "#2D3748"   # enrichment bubble plot high end (dark slate)
 
 # ============================================================================
 # BUNDLED DATA
@@ -223,7 +236,7 @@ visualize_genes_with_annotations <- function(
 ui <- dashboardPage(
   skin = "blue",
   
-  dashboardHeader(title = "Gene Expression Viewer"),
+  dashboardHeader(title = "SPP1 Transcriptome Explorer"),
   
   dashboardSidebar(
     sidebarMenu(
@@ -234,11 +247,85 @@ ui <- dashboardPage(
       menuItem("SPP1 Correlation", tabName = "spp1_correlation", icon = icon("project-diagram")),
       menuItem("Gene Expression Profile", tabName = "gene_profile", icon = icon("chart-area")),
       menuItem("PCA Analysis", tabName = "pca_analysis", icon = icon("project-diagram")),
-      menuItem("Regulon Analysis", tabName = "regulon", icon = icon("dna"))
+      menuItem("Regulon Analysis", tabName = "regulon", icon = icon("dna")),
+      menuItem("Documentation",    tabName = "docs",    icon = icon("book"))
     )
   ),
   
   dashboardBody(
+    tags$head(tags$style(HTML(sprintf("
+
+      /* ── Header ──────────────────────────────────────── */
+      .main-header .navbar,
+      .main-header .logo {
+        background-color: %s !important;
+        border-bottom-color: %s !important;
+      }
+      .main-header .logo {
+        font-size: 15px;
+      }
+      .main-header .logo:hover,
+      .main-header .navbar .sidebar-toggle:hover {
+        background-color: %s !important;
+      }
+
+      /* ── Sidebar ──────────────────────────────────────── */
+      .main-sidebar, .left-side {
+        background-color: %s !important;
+      }
+      .sidebar-menu > li > a {
+        color: #d0d8f0 !important;
+      }
+      .sidebar-menu > li.active > a,
+      .sidebar-menu > li:hover > a {
+        background-color: %s !important;
+        border-left-color: %s !important;
+        color: #ffffff !important;
+      }
+      .sidebar-menu > li.active > a {
+        border-left-color: %s !important;
+      }
+
+      /* ── Box headers (solidHeader, status primary + info) ── */
+      .box.box-primary > .box-header,
+      .box.box-info > .box-header {
+        background-color: %s !important;
+        color: #ffffff !important;
+      }
+      .box.box-primary > .box-header .box-title,
+      .box.box-info > .box-header .box-title {
+        color: #ffffff !important;
+      }
+      .box.box-primary,
+      .box.box-info {
+        border-color: %s !important;
+        border-top-color: %s !important;
+      }
+
+      /* ── Download buttons ─────────────────────────────── */
+      .shiny-download-link {
+        background-color: %s !important;
+        border-color: %s !important;
+        color: #ffffff !important;
+      }
+      .shiny-download-link:hover,
+      .shiny-download-link:focus {
+        background-color: %s !important;
+        border-color: %s !important;
+        color: #ffffff !important;
+      }
+
+    ",
+      COL_HEADER, COL_HEADER_DARK,
+      COL_HEADER_DARK,
+      COL_SIDEBAR,
+      COL_SIDEBAR_ACT, COL_ACCENT,
+      COL_ACCENT,
+      COL_ACCENT, COL_ACCENT, COL_ACCENT,
+      COL_DOWNLOAD, COL_DOWNLOAD_DRK,
+      COL_DOWNLOAD_DRK, COL_DOWNLOAD_DKR
+    )))),
+
     tabItems(
       # First tab - Gene Expression Heatmap
       tabItem(tabName = "heatmap",
@@ -442,10 +529,12 @@ ui <- dashboardPage(
                         choices = c("Gene Ontology (GO)" = "GO",
                                     "KEGG Pathways" = "KEGG"),
                         selected = "GO"),
-            helpText(HTML("<b>GO:</b> Gene Ontology terms (BP, MF, CC)<br><b>KEGG:</b> KEGG pathway database")),
+            helpText(HTML("<b>GO:</b> Gene Ontology (BP, MF, or CC via enrichR API)<br><b>KEGG:</b> KEGG 2021 Human pathways via enrichR API")),
             hr(),
             h4("Analysis Method"),
-            helpText(HTML("<b>Over-Representation Analysis (ORA):</b> Tests if pathway terms are over-represented in genes passing significance thresholds.")),
+            helpText(HTML("<b>Over-Representation Analysis (ORA):</b> Queries enrichR with your DEG gene list. Requires internet access.")),
+            helpText(HTML("Powered by <a href='https://maayanlab.cloud/Enrichr/' target='_blank'>Enrichr</a> (Ma'ayan Lab).")),
+            hr(),
             hr(),
             h4("Gene Selection Thresholds"),
             numericInput("go_logfc_threshold", "Log Fold Change threshold (|logFC| > threshold):",
@@ -464,11 +553,9 @@ ui <- dashboardPage(
                           selected = "BP")
             ),
             h4("Enrichment Options"),
-            numericInput("go_pval_cutoff", "P-value cutoff:",
+            numericInput("go_pval_cutoff", "Adjusted P-value cutoff:",
                         min = 0, max = 1, value = 0.05, step = 0.01),
-            numericInput("go_qval_cutoff", "Q-value cutoff:",
-                        min = 0, max = 1, value = 0.2, step = 0.05),
-            helpText("P-value and Q-value cutoffs for term significance"),
+            helpText("Filter terms with Adjusted P-value below this threshold"),
             hr(),
             actionButton("run_go_enrichment", "Run Enrichment", class = "btn-primary"),
             hr(),
@@ -732,6 +819,250 @@ ui <- dashboardPage(
         )
       ),
 
+      # Documentation tab
+      tabItem(tabName = "docs",
+        fluidRow(
+          column(width = 12,
+            h2("App Documentation"),
+            p("Click a section title on the left to view documentation for that tab.")
+          )
+        ),
+        fluidRow(
+          column(width = 12,
+            navlistPanel(
+              widths = c(3, 9),
+              well = TRUE,
+
+              # ── Gene Expression Heatmap ────────────────────────────────────────
+              tabPanel("1 · Gene Expression Heatmap",
+                h3("Gene Expression Heatmap"),
+                HTML("
+                  <b>Input</b><br>
+                  A list of gene symbols entered manually (one per line) <i>or</i> pulled automatically
+                  from a term selected in the Enrichment Analysis tab.
+                  <br><br>
+                  <b>Filters</b><br>
+                  Samples can be restricted by Cell Line, SPP1 Profile, Cisplatine treatment,
+                  Comment, and Replicate. All levels are selected by default.
+                  <br><br>
+                  <b>What is shown</b><br>
+                  A <code>ComplexHeatmap</code> of log2 TPM expression values for the selected genes
+                  across filtered samples. Columns can be clustered or sorted hierarchically by up to
+                  three metadata variables. Rows (genes) can be clustered. The colour scale
+                  (green → black → red) is auto-scaled to the data range or set manually.
+                  <br><br>
+                  <b>Interpretation</b><br>
+                  Red = high expression, green = low expression. Column splits and sorting help
+                  identify whether gene expression patterns track with treatment conditions or
+                  cell line identity.
+                ")
+              ),
+
+              # ── DEG Comparison ────────────────────────────────────────────────
+              tabPanel("2 · DEG Comparison",
+                h3("DEG Comparison"),
+                HTML("
+                  <b>Input</b><br>
+                  Pre-computed limma differential expression results (<code>deg_results.Rdata</code>).
+                  Each comparison in the file is a limma <code>topTable</code> result with columns
+                  <code>gene</code>, <code>logFC</code>, <code>P.Value</code>, <code>adj.P.Val</code>.
+                  <br><br>
+                  <b>What is shown</b><br>
+                  A scatter plot of log2 fold-change from one comparison (X-axis) against another
+                  (Y-axis). Points are coloured by whether they are significant in both, one, or
+                  neither comparison, using both raw p-value and adjusted p-value thresholds that
+                  you control. A table of the top 10 genes by absolute logFC in the X-axis comparison
+                  is shown below the plot.
+                  <br><br>
+                  <b>Interpretation</b><br>
+                  Genes in the upper-right and lower-left quadrants are concordantly regulated in
+                  both comparisons. Genes on the axes are specific to one comparison.
+                  Colour thresholds can be adjusted to highlight the stringency level you need.
+                ")
+              ),
+
+              # ── Volcano Plot ──────────────────────────────────────────────────
+              tabPanel("3 · Volcano Plot",
+                h3("Volcano Plot"),
+                HTML("
+                  <b>Input</b><br>
+                  Same pre-computed limma DEG results as the DEG Comparison tab.
+                  Select a single comparison from the dropdown.
+                  <br><br>
+                  <b>What is shown</b><br>
+                  A classic volcano plot: logFC on the X-axis, −log10(adjusted p-value) on the Y-axis.
+                  Thresholds for |logFC| and −log10(adj.p) are adjustable. The top N most significant
+                  genes are labelled. Colour scheme can switch between significance-based
+                  (Significant / FC only / P-val only) or direction-based (Up / Down).
+                  <br><br>
+                  <b>Interpretation</b><br>
+                  Genes furthest from the origin in both axes are the most biologically and
+                  statistically relevant. The dashed lines mark your chosen thresholds.
+                  Labelled genes are the top candidates by the product of fold-change and significance.
+                ")
+              ),
+
+              # ── Enrichment Analysis ───────────────────────────────────────────
+              tabPanel("4 · Enrichment Analysis",
+                h3("Enrichment Analysis"),
+                HTML("
+                  <b>Input</b><br>
+                  Genes are selected from the DEG results by applying two thresholds:
+                  |logFC| > threshold <i>and</i> adj.P.Val < threshold.
+                  Only genes passing <b>both</b> thresholds are submitted to the enrichment API.
+                  <br><br>
+                  <b>Method</b><br>
+                  Uses the <a href='https://maayanlab.cloud/Enrichr/' target='_blank'>Enrichr API</a>
+                  (Ma'ayan Lab) via the <code>enrichR</code> R package.
+                  Requires an active internet connection on the server.
+                  Database options: GO Biological Process / Molecular Function / Cellular Component
+                  (2023 versions) or KEGG 2021 Human.
+                  <br><br>
+                  <b>What is shown</b><br>
+                  A bubble plot of the top 20 significant terms (X = gene ratio, Y = term,
+                  bubble size = gene count, colour = −log10 adjusted p-value).
+                  Full results are in the Summary and Full Results tabs.
+                  Gene lists per term can be viewed and downloaded in the Gene Lists tab,
+                  and used directly to drive the Gene Expression Heatmap tab.
+                  <br><br>
+                  <b>Interpretation</b><br>
+                  Larger, darker bubbles indicate terms enriched by many genes with high
+                  statistical confidence. Gene Ratio = (genes in term hit) / (total genes in term).
+                ")
+              ),
+
+              # ── SPP1 Correlation ──────────────────────────────────────────────
+              tabPanel("5 · SPP1 Correlation",
+                h3("SPP1 Correlation"),
+                HTML("
+                  <b>Input</b><br>
+                  The normalised expression matrix (<code>expr_data_getmm.Rdata</code>, log2 TPM).
+                  Filter samples using the same metadata filters as the other tabs.
+                  <br><br>
+                  <b>Method</b><br>
+                  Pearson correlation is computed between SPP1 expression and every other gene
+                  across the filtered sample set using <code>cor.test()</code>.
+                  Genes with zero variance are skipped.
+                  <br><br>
+                  <b>What is shown</b><br>
+                  A volcano-style plot: Pearson r on the X-axis, −log10(p-value) on the Y-axis.
+                  Dashed lines mark the chosen correlation threshold (|r|) and p-value threshold.
+                  A specific gene can be searched and highlighted in black.
+                  Clicking a gene opens a scatter plot of that gene vs SPP1 with a regression line.
+                  <br><br>
+                  <b>Interpretation</b><br>
+                  Genes to the right of the positive threshold line with high −log10(p) are
+                  robustly positively co-expressed with SPP1. Left = negative co-expression.
+                  Use the scatter plot to verify the relationship is linear and not driven by outliers.
+                ")
+              ),
+
+              # ── Gene Expression Profile ───────────────────────────────────────
+              tabPanel("6 · Gene Expression Profile",
+                h3("Gene Expression Profile"),
+                HTML("
+                  <b>Input</b><br>
+                  A single gene selected from the full gene list in the expression matrix.
+                  Metadata filters and grouping / colouring variables are configurable.
+                  <br><br>
+                  <b>What is shown</b><br>
+                  A violin + box plot of log2 TPM expression for the selected gene,
+                  grouped by the chosen metadata variable (e.g. SPP1 Profile, Cisplatine).
+                  Individual sample points can be overlaid. A summary statistics table
+                  (mean, median, SD, min, max per group) is shown below.
+                  <br><br>
+                  <b>Interpretation</b><br>
+                  Useful for quickly checking whether a gene of interest tracks with a
+                  specific experimental condition. Wider violins indicate more samples
+                  at that expression level. Hover over points to see the sample ID.
+                ")
+              ),
+
+              # ── PCA ───────────────────────────────────────────────────────────
+              tabPanel("7 · PCA Analysis",
+                h3("PCA Analysis"),
+                HTML("
+                  <b>Input</b><br>
+                  The normalised expression matrix. Filter samples using metadata checkboxes.
+                  Choose the number of most-variable genes to use (default 500).
+                  <br><br>
+                  <b>Method</b><br>
+                  Variance of each gene is computed across the selected samples.
+                  The top N genes by variance are kept; genes with zero variance or
+                  missing values are removed. <code>prcomp()</code> is run with centering;
+                  scaling (dividing by SD) is optional.
+                  <br><br>
+                  <b>What is shown</b><br>
+                  PC1 vs PC2 scatter plot coloured and shaped by metadata variables of your choice.
+                  A scree plot shows variance explained per PC (up to PC20).
+                  A variance table and gene loadings table (top 50 genes by absolute loading)
+                  are also available.
+                  <br><br>
+                  <b>Interpretation</b><br>
+                  Samples that cluster together share similar global expression profiles.
+                  Check that replicates cluster and that separation tracks with the
+                  experimental variable of interest. Large loadings on a PC indicate
+                  genes most responsible for that axis of variation.
+                ")
+              ),
+
+              # ── Regulon Analysis ──────────────────────────────────────────────
+              tabPanel("8 · Regulon Analysis",
+                h3("Regulon Analysis"),
+                HTML("
+                  <b>Input</b><br>
+                  This tab does <b>not</b> use the DEG results directly. It uses a pre-computed
+                  TF activity matrix (<code>acts_mat.Rdata</code>) produced by
+                  <a href='https://saezlab.github.io/decoupleR/' target='_blank'>decoupleR</a>
+                  using the Univariate Linear Model (ULM) method against the
+                  <a href='https://github.com/saezlab/CollecTRI' target='_blank'>CollecTRI</a>
+                  regulon network. Each row is a transcription factor (TF), each column is a sample;
+                  values are ULM activity scores (not expression — a positive score means the TF's
+                  target gene programme is on average up-regulated in that sample).
+                  <br><br>
+                  <b>TF Gene Set Filter</b><br>
+                  <b>Recommended:</b> restrict to TFs whose target genes (CollecTRI network) overlap
+                  with the significant DEGs from <code>deg_results</code>. This focuses the analysis
+                  on regulators most likely relevant to the observed transcriptional changes and
+                  reduces multiple testing burden. Alternatively, test all ~500 TFs in CollecTRI
+                  for a less focused but more comprehensive view.
+                  <br><br>
+                  <b>Defining contrasts</b><br>
+                  Use the slider to add 1–8 contrasts. Each contrast compares two <b>sample base
+                  groups</b> (the part of the sample ID before the replicate suffix, e.g.
+                  <code>SCaBER_ctrl</code> vs <code>SCaBER_cispl</code>).
+                  Group 2 is compared against Group 1 (i.e. logFC = Group2 − Group1).
+                  An optional label and context tag can be given to each contrast for plot annotations.
+                  <b>Each group needs ≥ 2 replicates.</b>
+                  <br><br>
+                  <b>Method</b><br>
+                  For each contrast, a limma linear model (<code>lmFit</code> + <code>eBayes</code>)
+                  is fitted on the TF activity scores.
+                  <br><br>
+                  <b>What is shown</b><br>
+                  <ul>
+                    <li><b>Volcano plot:</b> one facet per contrast; logFC vs −log10(p-value);
+                        top N TFs labelled (coloured by direction).</li>
+                    <li><b>Heatmap:</b> top N most variable TFs across all contrasts;
+                        z-scored across samples (rows) when scaling is on; annotated by metadata.</li>
+                    <li><b>Results table:</b> full limma output for all TFs and contrasts;
+                        filterable and downloadable.</li>
+                  </ul>
+                  <br>
+                  <b>Interpretation</b><br>
+                  TFs with positive logFC and low adjusted p-value are more active in Group 2.
+                  This reflects a change in the <i>transcriptional programme</i> driven by that TF,
+                  not necessarily a change in TF expression itself.
+                  Cross-referencing with the Volcano Plot tab (which shows DEG results) can help
+                  distinguish TF activity changes from TF expression changes.
+                ")
+              )
+
+            ) # end navlistPanel
+          )
+        )
+      ),
+
       # Regulon Analysis tab
       tabItem(tabName = "regulon",
         fluidRow(
@@ -751,10 +1082,17 @@ ui <- dashboardPage(
             h4("TF Gene Set"),
             selectInput("regulon_tf_set", "Restrict TFs to:",
                         choices = c(
-                          "All DEG targets"      = "all_deg",
-                          "All TFs in CollecTRI" = "all"
+                          "TFs targeting DEGs (recommended)" = "all_deg",
+                          "All TFs in CollecTRI"             = "all"
                         ),
                         selected = "all_deg"),
+            helpText(HTML(
+              "<b>Recommended:</b> restricts to TFs whose target genes (CollecTRI network) ",
+              "overlap with the significant DEGs. Focuses the analysis on regulators most ",
+              "likely driving the observed transcriptional changes and reduces multiple testing.",
+              "<br><br>",
+              "<b>All TFs:</b> tests every TF in CollecTRI — more comprehensive but less focused."
+            )),
             hr(),
 
             h4("Heatmap Options"),
@@ -809,38 +1147,8 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) {
   
-  # ============================================================================
-  # CACHE FOR PERFORMANCE OPTIMIZATION
-  # ============================================================================
-  
-  # Cache for gene ID conversions to speed up repeated GO analyses
-  gene_id_cache <- reactiveValues(
-    symbol_to_entrez = NULL
-  )
-  
-  # Pre-build gene ID mapping on first use (lazy loading)
-  observe({
-    # This will be triggered when data is available
-    req(exists("expr_data_getmm"))
-    
-    # Only build once
-    if (is.null(gene_id_cache$symbol_to_entrez)) {
-      # Build mapping for all genes in the dataset to speed up future lookups
-      all_genes <- rownames(expr_data_getmm)
-      
-      tryCatch({
-        gene_id_cache$symbol_to_entrez <- bitr(
-          all_genes,
-          fromType = "SYMBOL",
-          toType = "ENTREZID",
-          OrgDb = org.Hs.eg.db
-        )
-      }, error = function(e) {
-        # If it fails, set to empty data frame to avoid repeated attempts
-        gene_id_cache$symbol_to_entrez <- data.frame(SYMBOL = character(), ENTREZID = character())
-      })
-    }
-  })
+  # Set enrichR site once on startup
+  enrichR::setEnrichrSite("Enrichr")
   
   # Initialize choices based on metadata
   observe({
@@ -914,16 +1222,16 @@ server <- function(input, output, session) {
       }
       
       # Get the selected term's genes
-      term_data <- results$results@result %>%
-        filter(ID == input$enrichment_term_select)
+      term_data <- results$results %>%
+        filter(Term == input$enrichment_term_select)
       
       if (nrow(term_data) == 0) {
         showNotification("No genes found for selected term", type = "error")
         return(NULL)
       }
       
-      # Extract gene symbols from ORA results (geneID column)
-      genes <- strsplit(term_data$geneID, "/")[[1]]
+      # Extract gene symbols from enrichR results (Genes column, semicolon-separated)
+      genes <- trimws(strsplit(term_data$Genes, ";")[[1]])
     }
     
     req(length(genes) > 0)
@@ -1278,7 +1586,7 @@ server <- function(input, output, session) {
                       selected = comparison_names[1])
   })
   
-  # Perform GO/KEGG enrichment when button is clicked
+  # Perform enrichment when button is clicked
   go_enrichment_results <- eventReactive(input$run_go_enrichment, {
     withProgress(message = 'Running pathway enrichment...', value = 0, {
       tryCatch({
@@ -1287,102 +1595,86 @@ server <- function(input, output, session) {
         # Get DEG data for the selected comparison
         deg_data <- deg_results[[input$go_comparison]]
         
-        # ============ Over-Representation Analysis (ORA) ============
-          # ============ Over-Representation Analysis ============
-          incProgress(0.1, detail = "Filtering genes...")
-          
-          # Filter genes based on thresholds
-          selected_genes <- deg_data %>%
-            filter(
-              abs(logFC) > input$go_logfc_threshold,
-              adj.P.Val < input$go_adjp_threshold
-            )
-          
-          if (nrow(selected_genes) == 0) {
-            return(list(
-              error = TRUE,
-              message = "No genes meet the specified thresholds. Please adjust the thresholds.",
-              method = "ORA",
-              database = input$pathway_database
-            ))
-          }
-          
-          # Get gene symbols
-          gene_list <- selected_genes$gene
-          
-          incProgress(0.2, detail = "Converting gene IDs...")
-          
-          # Use cached gene ID mapping for faster conversion
-          if (!is.null(gene_id_cache$symbol_to_entrez) && nrow(gene_id_cache$symbol_to_entrez) > 0) {
-            # Use pre-built cache
-            gene_entrez <- gene_id_cache$symbol_to_entrez %>%
-              filter(SYMBOL %in% gene_list)
-          } else {
-            # Fallback: convert on-the-fly if cache not available
-            gene_entrez <- bitr(gene_list, 
-                               fromType = "SYMBOL",
-                               toType = "ENTREZID",
-                               OrgDb = org.Hs.eg.db)
-          }
-          
-          if (nrow(gene_entrez) == 0) {
-            return(list(
-              error = TRUE,
-              message = "No genes could be mapped to Entrez IDs. Check gene symbols.",
-              method = "ORA",
-              database = input$pathway_database
-            ))
-          }
-          
-          incProgress(0.4, detail = "Running ORA enrichment...")
-          
-          # Perform enrichment based on database selection
-          if (input$pathway_database == "GO") {
-            # GO enrichment
-            enrich_result <- enrichGO(gene = gene_entrez$ENTREZID,
-                           OrgDb = org.Hs.eg.db,
-                           ont = input$go_ontology,
-                           pAdjustMethod = "BH",
-                           pvalueCutoff = input$go_pval_cutoff,
-                           qvalueCutoff = input$go_qval_cutoff,
-                           readable = TRUE,
-                           pool = FALSE)
-          } else {
-            # KEGG pathway enrichment
-            enrich_result <- enrichKEGG(gene = gene_entrez$ENTREZID,
-                           organism = "hsa",  # Homo sapiens
-                           pAdjustMethod = "BH",
-                           pvalueCutoff = input$go_pval_cutoff,
-                           qvalueCutoff = input$go_qval_cutoff)
-          }
-          
-          incProgress(0.3, detail = "Processing results...")
-          
-          if (is.null(enrich_result) || nrow(enrich_result@result) == 0) {
-            return(list(
-              error = TRUE,
-              message = paste("No significant", input$pathway_database, "terms found. Try relaxing the cutoff values."),
-              method = "ORA",
-              database = input$pathway_database
-            ))
-          }
-          
-        # Return results
+        incProgress(0.1, detail = "Filtering genes...")
+        
+        # Filter genes based on thresholds
+        selected_genes <- deg_data %>%
+          filter(
+            abs(logFC) > input$go_logfc_threshold,
+            adj.P.Val < input$go_adjp_threshold
+          )
+        
+        if (nrow(selected_genes) == 0) {
+          return(list(
+            error = TRUE,
+            message = "No genes meet the specified thresholds. Please adjust the thresholds.",
+            database = input$pathway_database
+          ))
+        }
+        
+        gene_list <- selected_genes$gene
+        
+        incProgress(0.3, detail = "Querying enrichR API...")
+        
+        # Map database choice to enrichR database name
+        db <- if (input$pathway_database == "GO") {
+          switch(input$go_ontology,
+            "BP" = "GO_Biological_Process_2023",
+            "MF" = "GO_Molecular_Function_2023",
+            "CC" = "GO_Cellular_Component_2023",
+            "GO_Biological_Process_2023"
+          )
+        } else {
+          "KEGG_2021_Human"
+        }
+        
+        enrichr_res <- enrichR::enrichr(gene_list, databases = db)
+        result_df   <- enrichr_res[[db]]
+        
+        incProgress(0.4, detail = "Filtering results...")
+        
+        if (is.null(result_df) || nrow(result_df) == 0) {
+          return(list(
+            error    = TRUE,
+            message  = paste("No results returned from enrichR for database:", db),
+            database = input$pathway_database
+          ))
+        }
+        
+        # Parse Overlap and filter by adjusted p-value cutoff
+        result_df <- result_df %>%
+          filter(Adjusted.P.value < input$go_pval_cutoff) %>%
+          arrange(Adjusted.P.value) %>%
+          mutate(
+            Count     = as.integer(sapply(strsplit(Overlap, "/"), `[[`, 1)),
+            Total     = as.integer(sapply(strsplit(Overlap, "/"), `[[`, 2)),
+            GeneRatio = Count / Total
+          )
+        
+        if (nrow(result_df) == 0) {
+          return(list(
+            error    = TRUE,
+            message  = paste0("No significant terms found (adj.p < ", input$go_pval_cutoff,
+                              "). Try relaxing the cutoff."),
+            database = input$pathway_database
+          ))
+        }
+        
+        incProgress(0.2, detail = "Done.")
+        
         list(
-          error = FALSE,
-          results = enrich_result,
-          method = "ORA",
+          error    = FALSE,
+          results  = result_df,
           database = input$pathway_database,
-          n_genes = length(gene_list),
-          n_mapped = nrow(gene_entrez),
-          n_terms = nrow(enrich_result@result)
+          db_name  = db,
+          n_genes  = length(gene_list),
+          n_terms  = nrow(result_df)
         )
         
       }, error = function(e) {
         return(list(
-          error = TRUE,
-          message = paste("Error:", e$message),
-          method = "ORA",
+          error    = TRUE,
+          message  = paste("Error:", e$message),
           database = input$pathway_database
         ))
       })
@@ -1393,27 +1685,15 @@ server <- function(input, output, session) {
   output$go_gene_count <- renderText({
     req(go_enrichment_results())
     results <- go_enrichment_results()
-    
-    if (results$error) {
-      return("")
-    }
-    
-    if (results$method == "ORA") {
-      paste0("Genes selected: ", results$n_genes, " (", results$n_mapped, " mapped to Entrez ID)")
-    } else {
-      paste0("Total genes ranked: ", results$n_genes, " (", results$n_mapped, " mapped to Entrez ID)")
-    }
+    if (results$error) return("")
+    paste0("Genes submitted: ", results$n_genes)
   })
   
   # Display term count summary
   output$go_term_count <- renderText({
     req(go_enrichment_results())
     results <- go_enrichment_results()
-    
-    if (results$error) {
-      return("")
-    }
-    
+    if (results$error) return("")
     term_type <- if (results$database == "GO") "GO terms" else "KEGG pathways"
     paste0("Significant ", term_type, ": ", results$n_terms)
   })
@@ -1424,7 +1704,6 @@ server <- function(input, output, session) {
     results <- go_enrichment_results()
     
     if (results$error) {
-      # Show error message
       plot_ly() %>%
         layout(
           title = list(text = results$message, x = 0.5, xanchor = "center"),
@@ -1432,18 +1711,16 @@ server <- function(input, output, session) {
           yaxis = list(visible = FALSE)
         )
     } else {
-      # ============ ORA Bubble Plot ============
-      go_data <- results$results@result %>%
-        head(20) %>%  # Show top 20 terms
+      go_data <- results$results %>%
+        head(20) %>%
         mutate(
-          GeneRatio_num = sapply(strsplit(GeneRatio, "/"), function(x) as.numeric(x[1])/as.numeric(x[2])),
-          log_pval = -log10(p.adjust),
-          Description = forcats::fct_reorder(Description, log_pval)  # Sort by significance
+          log_pval = -log10(Adjusted.P.value),
+          Term = forcats::fct_reorder(Term, log_pval)
         )
       
       plot_ly(go_data,
-              x = ~GeneRatio_num,
-              y = ~Description,
+              x = ~GeneRatio,
+              y = ~Term,
               type = 'scatter',
               mode = 'markers',
               marker = list(
@@ -1451,21 +1728,26 @@ server <- function(input, output, session) {
                 sizemode = 'diameter',
                 sizeref = max(go_data$Count) / 50,
                 color = ~log_pval,
-                colorscale = 'Viridis',
+                colorscale = list(
+                  list(0,   COL_PLOT_LOW),
+                  list(0.5, COL_PLOT_MID),
+                  list(1,   COL_PLOT_HIGH)
+                ),
                 colorbar = list(title = "-log10(adj.p)"),
                 line = list(width = 1, color = 'rgba(0,0,0,0.3)')
               ),
               text = ~paste0(
-                "GO Term: ", Description,
-                "<br>Gene Ratio: ", GeneRatio,
+                "Term: ", Term,
+                "<br>Gene Ratio: ", round(GeneRatio, 3),
+                "<br>Overlap: ", Overlap,
                 "<br>Count: ", Count,
-                "<br>P-value: ", format(pvalue, scientific = TRUE, digits = 3),
-                "<br>Adj. P-value: ", format(p.adjust, scientific = TRUE, digits = 3)
+                "<br>P-value: ", format(P.value, scientific = TRUE, digits = 3),
+                "<br>Adj. P-value: ", format(Adjusted.P.value, scientific = TRUE, digits = 3)
               ),
               hoverinfo = 'text'
       ) %>%
         layout(
-          title = paste("GO Over-Representation -", input$go_ontology),
+          title = paste("Enrichment -", results$db_name),
           xaxis = list(title = "Gene Ratio"),
           yaxis = list(title = ""),
           margin = list(l = 300),
@@ -1480,29 +1762,24 @@ server <- function(input, output, session) {
     results <- go_enrichment_results()
     
     if (results$error) {
-      # Return empty table with error message
       datatable(data.frame(Message = results$message),
-                options = list(dom = 't'),
-                rownames = FALSE)
+                options = list(dom = 't'), rownames = FALSE)
     } else {
-      # ORA summary table
-      summary_data <- results$results@result %>%
+      summary_data <- results$results %>%
         head(20) %>%
-        dplyr::select(ID, Description, GeneRatio, BgRatio, pvalue, p.adjust, Count) %>%
+        dplyr::select(Term, Overlap, P.value, Adjusted.P.value, Odds.Ratio, Combined.Score, Count) %>%
         mutate(
-          pvalue = format(pvalue, scientific = TRUE, digits = 3),
-          p.adjust = format(p.adjust, scientific = TRUE, digits = 3)
+          P.value          = format(P.value,          scientific = TRUE, digits = 3),
+          Adjusted.P.value = format(Adjusted.P.value, scientific = TRUE, digits = 3),
+          Odds.Ratio       = round(Odds.Ratio,    2),
+          Combined.Score   = round(Combined.Score, 2)
         )
       
       datatable(
         summary_data,
-        options = list(
-          pageLength = 20,
-          scrollX = TRUE,
-          ordering = TRUE
-        ),
+        options = list(pageLength = 20, scrollX = TRUE, ordering = TRUE),
         rownames = FALSE,
-        caption = "Top 20 enriched terms (ORA)"
+        caption  = "Top 20 enriched terms"
       )
     }
   })
@@ -1513,51 +1790,39 @@ server <- function(input, output, session) {
     results <- go_enrichment_results()
     
     if (results$error) {
-      # Return empty table with error message
       datatable(data.frame(Message = results$message),
-                options = list(dom = 't'),
-                rownames = FALSE)
+                options = list(dom = 't'), rownames = FALSE)
     } else {
-      # Show all results
-      full_data <- results$results@result %>%
+      full_data <- results$results %>%
+        dplyr::select(Term, Overlap, P.value, Adjusted.P.value, Odds.Ratio, Combined.Score, Count, Genes) %>%
         mutate(
-          pvalue = format(pvalue, scientific = TRUE, digits = 3),
-          p.adjust = format(p.adjust, scientific = TRUE, digits = 3)
+          P.value          = format(P.value,          scientific = TRUE, digits = 3),
+          Adjusted.P.value = format(Adjusted.P.value, scientific = TRUE, digits = 3),
+          Odds.Ratio       = round(Odds.Ratio,    2),
+          Combined.Score   = round(Combined.Score, 2)
         )
-      
-      # Format qvalue if present
-      if ("qvalue" %in% colnames(full_data)) {
-        full_data <- full_data %>%
-          mutate(qvalue = format(qvalue, scientific = TRUE, digits = 3))
-      }
       
       datatable(
         full_data,
-        options = list(
-          pageLength = 25,
-          scrollX = TRUE,
-          ordering = TRUE
-        ),
+        options = list(pageLength = 25, scrollX = TRUE, ordering = TRUE),
         rownames = FALSE,
-        caption = paste("Full", results$method, "Results")
+        caption  = "Full enrichment results"
       )
     }
   })
   
-  # Download handler for GO results
+  # Download handler for enrichment results
   output$download_go_results <- downloadHandler(
     filename = function() {
       req(go_enrichment_results())
       results <- go_enrichment_results()
-      paste0("GO_", results$method, "_", input$go_comparison, "_", 
-             input$go_ontology, "_", Sys.Date(), ".csv")
+      paste0("enrichR_", results$database, "_", input$go_comparison, "_", Sys.Date(), ".csv")
     },
     content = function(file) {
       req(go_enrichment_results())
       results <- go_enrichment_results()
-      
       if (!results$error) {
-        write.csv(results$results@result, file, row.names = FALSE)
+        write.csv(results$results, file, row.names = FALSE)
       }
     }
   )
@@ -1567,15 +1832,13 @@ server <- function(input, output, session) {
     req(go_enrichment_results())
     results <- go_enrichment_results()
     
-    if (!results$error && nrow(results$results@result) > 0) {
-      # Create choices with term description as label and ID as value
+    if (!results$error && nrow(results$results) > 0) {
       term_choices <- setNames(
-        results$results@result$ID,
-        paste0(results$results@result$Description, " (", results$results@result$Count, " genes)")
+        results$results$Term,
+        paste0(results$results$Term, " (", results$results$Count, " genes)")
       )
       
-      # Update both dropdowns
-      updateSelectInput(session, "gene_list_term", 
+      updateSelectInput(session, "gene_list_term",
                        choices = term_choices,
                        selected = term_choices[1])
       updateSelectInput(session, "enrichment_term_select",
@@ -1594,18 +1857,15 @@ server <- function(input, output, session) {
       return("No enrichment results available. Please run enrichment analysis first.")
     }
     
-    # Get the selected term's genes
-    term_data <- results$results@result %>%
-      filter(ID == input$gene_list_term)
+    term_data <- results$results %>%
+      filter(Term == input$gene_list_term)
     
     if (nrow(term_data) == 0) {
       return("No genes found for selected term")
     }
     
-    # Extract gene symbols from ORA results (geneID column)
-    genes <- strsplit(term_data$geneID, "/")[[1]]
-    
-    # Return genes one per line for easy copying
+    # Genes column is semicolon-separated in enrichR results
+    genes <- trimws(strsplit(term_data$Genes, ";")[[1]])
     paste(genes, collapse = "\n")
   })
   
@@ -1613,22 +1873,17 @@ server <- function(input, output, session) {
   output$download_gene_list <- downloadHandler(
     filename = function() {
       req(input$gene_list_term)
-      results <- go_enrichment_results()
-      term_desc <- results$results@result %>%
-        filter(ID == input$gene_list_term) %>%
-        pull(Description)
-      paste0("genes_", gsub("[^A-Za-z0-9]", "_", term_desc), "_", Sys.Date(), ".txt")
+      paste0("genes_", gsub("[^A-Za-z0-9]", "_", input$gene_list_term), "_", Sys.Date(), ".txt")
     },
     content = function(file) {
       req(go_enrichment_results())
       req(input$gene_list_term)
       
-      results <- go_enrichment_results()
-      term_data <- results$results@result %>%
-        filter(ID == input$gene_list_term)
+      results  <- go_enrichment_results()
+      term_data <- results$results %>%
+        filter(Term == input$gene_list_term)
       
-      # Extract gene list from ORA results (geneID column)
-      genes <- strsplit(term_data$geneID, "/")[[1]]
+      genes <- trimws(strsplit(term_data$Genes, ";")[[1]])
       writeLines(genes, file)
     }
   )
